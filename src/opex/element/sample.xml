@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Batch FormatVersion="123.45" BaseMachine="str1234" ScanDevice="str1234" SoftwareVersion="str1234" TransportId="str1234" BatchIdentifier="str1234" JobType="str1234" OperatingMode="str1234" JobName="str1234" OperatorName="str1234" StartTime="str1234" ReceiveDate="2012-12-13" ProcessDate="2012-12-13" ImageFilePath="str1234" PluginMessage="str1234" DeveloperReserved="str1234">
+  <Transaction TransactionID="123">
+    <Group GroupID="123">
+      <Page DocumentLocator="123" BatchSequence="123" TransactionSequence="123" ScanSequence="123" GroupSequence="123" ItemStatus="str1234" IsVirtual="str1234" PageType="str1234" PageName="str1234" SubPageName="str1234" OperatorSelect="str1234" Bin="str1234" Length="str1234" Height="str1234" EnvelopeDetect="str1234" AverageThickness="123.45" SkewDegrees="123.45" DeskewStatus="str1234" FrontStreakDetectStatus="str1234" BackStreakDetectStatus="str1234" PlugInPageMessage="str1234" ScanTime="str1234">
+        <Image Index="12" RescanStatus="str1234" ScantimeFinalBlankAreaDecision="str1234" Side="str1234" Type="str1234" Depth="5" Format="str1234" Filename="str1234" Filesize="123" Length="12" Height="12" OffsetLength="12" OffsetHeight="12" ResolutionLength="12" ResolutionHeight="12" />
+        <Micr Status="str1234" RtStatus="str1234" CheckType="str1234" Side="str1234" Value="str1234" />
+        <Ocr Index="5" Side="str1234" Value="str1234" Name="str1234" />
+        <Barcode Index="5" Type="str1234" Side="str1234" Value="str1234" />
+        <MarkDetect Index="5" Side="str1234" Result="str1234" Name="str1234" />
+        <AuditTrail Type="str1234" Side="str1234" Text="str1234" Apply="str1234" />
+        <ReferenceID Index="5" Response="str1234" Name="str1234" />
+      </Page>
+    </Group>
+  </Transaction>
+  <ReferenceID Index="5" Response="str1234" Name="str1234" />
+  <EndInfo EndTime="str1234" NumPages="123" NumGroups="123" NumTransactions="123" IsModified="str1234" />
+</Batch>

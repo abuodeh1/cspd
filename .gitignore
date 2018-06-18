@@ -1,0 +1,9 @@
+/bin/
+bin/
+/target/
+target/
+.settings
+_classpath.xml
+_project.xml
+.classpath
+.project
