@@ -8,14 +8,14 @@
 <?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
 
-<VBox prefHeight="540.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="opex.fx.OpexController">
+<VBox prefHeight="540.0" prefWidth="623.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="opex.fx.OpexController">
   <children>
     <MenuBar VBox.vgrow="NEVER">
       <menus>
         <Menu mnemonicParsing="false" text="File">
           <items>
             <MenuItem mnemonicParsing="false" text="New" visible="false" />
-            <MenuItem mnemonicParsing="false" onAction="#handleOpenButton" text="Open…" />
+            <MenuItem mnemonicParsing="false" onAction="#handleOpenMenuItem" text="Open…" />
             <Menu mnemonicParsing="false" text="Open Recent" visible="false" />
             <SeparatorMenuItem mnemonicParsing="false" visible="false" />
             <MenuItem mnemonicParsing="false" text="Close" visible="false" />
@@ -25,7 +25,7 @@
             <SeparatorMenuItem mnemonicParsing="false" visible="false" />
             <MenuItem mnemonicParsing="false" text="Preferences…" visible="false" />
             <SeparatorMenuItem mnemonicParsing="false" />
-            <MenuItem mnemonicParsing="false" text="Quit" />
+            <MenuItem mnemonicParsing="false" text="Quit" onAction="#handleQuitMenuItem"/>
           </items>
         </Menu>
         <Menu mnemonicParsing="false" text="Edit" visible="false">
@@ -51,7 +51,7 @@
     </MenuBar>
     <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="506.0" prefWidth="800.0" VBox.vgrow="ALWAYS">
       <children>
-            <HBox layoutX="196.0" layoutY="35.0" prefHeight="35.0" prefWidth="537.0" spacing="10.0">
+            <HBox layoutX="40.0" layoutY="35.0" prefHeight="35.0" prefWidth="537.0" spacing="10.0">
                <children>
                   <Label text="File" />
                   <TextField fx:id="openXMLTextField" disable="true" onAction="#handleOpexFileChooserButton" prefHeight="25.0" prefWidth="426.0" promptText="Choose Opex XML" />
@@ -64,16 +64,16 @@
                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                </padding>
             </HBox>
-            <TreeTableView fx:id="treeTableView" layoutX="191.0" layoutY="80.0" prefHeight="362.0" prefWidth="546.0">
+            <TreeTableView fx:id="treeTableView" layoutX="19.0" layoutY="80.0" prefHeight="362.0" prefWidth="575.0">
               <columns>
                   <TreeTableColumn fx:id="transactionClm" prefWidth="150.0" text="Transaction" />
                   <TreeTableColumn fx:id="groupClm" prefWidth="120.0" text="Group" />
                   <TreeTableColumn fx:id="pagesClm" prefWidth="80.0" text="# of Pages" />
                   <TreeTableColumn fx:id="imagesClm" text="# of Images" />
-                  <TreeTableColumn fx:id="existenceClm" prefWidth="112.0" text="Existence?" />
+                  <TreeTableColumn fx:id="existenceClm" prefWidth="143.0" text="Existence?" />
               </columns>
             </TreeTableView>
-            <HBox layoutX="434.0" layoutY="453.0">
+            <HBox layoutX="244.0" layoutY="453.0">
                <children>
                   <Button layoutX="434.0" layoutY="446.0" mnemonicParsing="false" onAction="#handleUploadToOmnidocsButton" text="Upload To Omnidocs" />
                </children>

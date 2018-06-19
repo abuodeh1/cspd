@@ -1,8 +1,5 @@
 package cspd;
 
-import java.sql.Connection;
-
-import etech.resource.pool.PoolService;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -11,19 +8,12 @@ import javafx.stage.Stage;
 
 public class CSPDApplication extends Application {
 
-	private static PoolService<Connection> connectionPoolService;
+	public static Scene PRIMARY_SCENE;
 	
 	public static void main(String[] args) {
+
+		launch(args);
 		
-		try {
-		//	connectionPoolService = new ConnectionPool("", "", "");
-			
-//			new CSPDApplication().task();
-			launch(args);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 	
 	@Override
@@ -37,11 +27,17 @@ public class CSPDApplication extends Application {
 			primaryStage.setScene(scene);
 			primaryStage.show();
 			
-			
+			PRIMARY_SCENE = scene;
 			
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void stop() throws Exception {
+		// TODO Auto-generated method stub
+		super.stop();
 	}
 	
 
