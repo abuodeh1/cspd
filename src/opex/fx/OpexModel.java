@@ -1,6 +1,7 @@
 package opex.fx;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.Connection;
@@ -14,10 +15,13 @@ import java.util.concurrent.TimeUnit;
 
 import cspd.BatchDetails;
 import etech.dms.exception.DocumentException;
+import etech.dms.exception.FolderException;
 import etech.dms.util.DocumentUtility;
+import etech.dms.util.FolderUtility;
 import etech.omni.OmniService;
 import etech.omni.core.DataDefinition;
 import etech.omni.core.Document;
+import etech.omni.core.Field;
 import etech.omni.core.Folder;
 import etech.omni.helper.NGOHelper;
 import etech.resource.pool.PoolFactory;
@@ -33,93 +37,101 @@ public class OpexModel {
 	Batch batch;
 	
 	public OpexModel(Batch batch) {
-		this.batch = batch;		//String folderDestination = "D:\\temp1\\";
+		this.batch = batch;		
+		//String folderDestination = "D:\\temp1\\";
 	}
 
-	public void uploadDocumentsToOmnidocs(String filePath) throws Exception {
+	public void uploadDocumentsToOmnidocs(OmniService omniService, String filePath) throws Exception {
 
-		String parentFolderID = "116";
-		
-		OmniService omniService = new OmniService("192.168.60.148", 3333, true);
-		omniService.openCabinetSession("mabuodeh", "etech123", "jlgccab1", false, "S");
+		try(FileWriter fileLog = new FileWriter(new File(filePath).getParent()+"\\log.txt", true)) {
+			
+			String parentFolderID = "116";
+			
+			// read opex xml
+	
+			Batch batch = NGOHelper.getResponseAsPOJO(Batch.class, new String(Files.readAllBytes(new File(filePath).toPath())));
+			String scanFolderPath = batch.getImageFilePath();
+	
+			// fetch metadata from database from index per file
+	
+			long startDate = System.currentTimeMillis();
+	
+			Iterator<Transaction> transactions = batch.getTransaction().iterator();
+	
+			while (transactions.hasNext()) {
+	
+				Transaction transaction = transactions.next();
+	
+				Iterator<Group> groups = transaction.getGroup().iterator();
+	
+				while (groups.hasNext()) {
+	
+					Group group = groups.next();
+					
+					long fileID = group.getGroupID();
 
-		// read opex xml
-
-		Batch batch = NGOHelper.getResponseAsPOJO(Batch.class, new String(Files.readAllBytes(new File(filePath).toPath())));
-		String scanFolderPath = batch.getImageFilePath();
-
-		// fetch metadata from database from index per file
-
-		long startDate = System.currentTimeMillis();
-
-		Iterator<Transaction> transactions = batch.getTransaction().iterator();
-
-		while (transactions.hasNext()) {
-
-			Transaction transaction = transactions.next();
-
-			Iterator<Group> groups = transaction.getGroup().iterator();
-
-			while (groups.hasNext()) {
-
-				Group group = groups.next();
-				long fileID = group.getGroupID();
-
-				// call database and get db row
-				// select datadefinition according type field
-				int dataDefinitionType = 1;
-
-				String serialNumber = "018/01/00000" + String.valueOf(fileID);
-
-				Folder folder = new Folder();
-				folder.setFolderName(serialNumber);
-				folder.setParentFolderIndex(parentFolderID);
-				
-				List<Folder> folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, folder.getFolderName());
-				Folder searchFolderRs = folderRs.size() > 0 ? folderRs.get(0): null;
-
-				if(searchFolderRs != null) {
-					System.out.println("Folder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
-					continue;
-				}
-				
-				folder.setDataDefinition(prepareDataDefinition(omniService, dataDefinitionType, serialNumber));
-				
-				Folder addedFolder = omniService.getFolderUtility().addFolder(parentFolderID, folder);
-
-				Iterator<Page> pages = group.getPage().iterator();
-				
-				while (pages.hasNext()) {
-
-					Page page = pages.next();
-					page.getImage().stream().forEach(image -> {
-						Document document = new Document();
-						document.setParentFolderIndex(addedFolder.getFolderIndex());
-						document.setDocumentName(image.getFilename());
-
-						try {
-							omniService.getDocumentUtility().addDocument(new File(
-									scanFolderPath + System.getProperty("file.separator") + image.getFilename()),
-									document);
-						} catch (DocumentException e) {
-							e.printStackTrace();
+					int dataDefinitionType = 1;
+	
+					String serialNumber = "018/01/00000" + String.valueOf(fileID);
+	
+					Folder folder = new Folder();
+					folder.setFolderName(serialNumber);					
+					folder.setParentFolderIndex(parentFolderID);
+					
+					List<Folder> folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, folder.getFolderName());
+					Folder searchFolderRs = folderRs.size() > 0 ? folderRs.get(0): null;
+	
+					if(searchFolderRs != null) {
+						fileLog.write("\nFolder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
+						//System.out.println("Folder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
+						continue;
+					}
+					
+					folder.setDataDefinition(prepareDataDefinition(omniService, dataDefinitionType, serialNumber));
+					
+					Folder addedFolder = omniService.getFolderUtility().addFolder(parentFolderID, folder);
+	
+					Iterator<Page> pages = group.getPage().iterator();
+					
+					while (pages.hasNext()) {
+	
+						Page page = pages.next();
+						
+						Iterator<Image> images = page.getImage().iterator();
+						
+						while (images.hasNext()) {
+						
+							Image image = images.next();
+							
+							Document document = new Document();							
+							document.setParentFolderIndex(addedFolder.getFolderIndex());							
+							document.setDocumentName(image.getFilename());
+							
+							String imagePath = scanFolderPath + System.getProperty("file.separator") + image.getFilename();
+							
+							try {
+								omniService.getDocumentUtility().addDocument(new File(imagePath), document);
+								
+								fileLog.write("\n" + imagePath + " uploaded successfuly.");
+								
+							} catch (DocumentException e) {
+								
+								fileLog.write("\nUnable to upload " + imagePath);
+								
+								e.printStackTrace();
+							}
 						}
-					});
-
+	
+					}
 				}
 			}
+
+			//System.out.println( "Time Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate));
+			fileLog.write("Time Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+".\n");
 		}
-
-		System.out.println( "Time Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate));
-		
-		omniService.complete();
-
 	}
 
-	private void exportTaskWithoutSubfolder(String folderID, String folderDestination) throws Exception {
-
-		OmniService omniService = new OmniService("192.168.60.148", 3333, true);
-		omniService.openCabinetSession("mabuodeh", "etech123", "jlgccab1", false, "S");
+	public void exportTaskWithoutSubfolder(OmniService omniService, String folderID, String folderDestination) throws Exception {
 
 		long startDate = System.currentTimeMillis();
 
@@ -129,15 +141,11 @@ public class OpexModel {
 		exportTaskFoldersWithDocuments(omniService, folders, folderDestination);
 		
 		System.out.println("exportTaskWithoutSubfolder Task Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate) + " s");
-		
-		omniService.complete();
+
 	}
 	
-	private void exportTaskWithSubfolder(String folderID, String folderDestination) throws Exception {
+	public void exportTaskWithSubfolder(OmniService omniService, String folderID, String folderDestination) throws Exception {
 		
-		OmniService omniService = new OmniService("192.168.60.148", 3333, true);
-		omniService.openCabinetSession("mabuodeh", "etech123", "jlgccab1", false, "S");
-
 		long startDate = System.currentTimeMillis();
 
 		List<Folder> folders = omniService.getFolderUtility().getFolderList(folderID, true);
@@ -145,40 +153,72 @@ public class OpexModel {
 		exportTaskFoldersWithDocuments(omniService, folders, folderDestination);
 		
 		System.out.println("exportTaskWithSubfolder Task Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate) + " s");
-		
-		omniService.complete();
+
 	}	
 	
-	private void exportTaskFoldersWithDocuments(OmniService omniService, List<Folder> folders, String folderDestination) throws Exception {
+	public void exportTaskFoldersWithDocuments(OmniService omniService, List<Folder> folders, String folderDestination) throws Exception {
 	
-		long startDate = System.currentTimeMillis();
-
-		DocumentUtility<Document> documentUtility = omniService.getDocumentUtility();
-		folders.stream().forEach(folder -> {
-			try {
-				
-				List<Document> documents = documentUtility.getDocumentList(folder.getFolderIndex(), false);
-				documents.stream().forEach(document -> {
-					try {
-						String nextDest = folderDestination + resolveInvlidFilenameChars(folder.getFolderName());
-						File file = new File(nextDest);
-						if(!file.exists()){
-							file.mkdirs();
+		try(FileWriter fileLog = new FileWriter(new File(folderDestination).getParent()+"\\export-log.txt", true)) {
+			long startDate = System.currentTimeMillis();
+	
+			FolderUtility<Folder, DataDefinition, Field> folderUtility = omniService.getFolderUtility();
+			
+			DocumentUtility<Document> documentUtility = omniService.getDocumentUtility();
+	
+			folders.stream().forEach(folder -> {
+				try {
+					
+					List<Document> documents = documentUtility.getDocumentList(folder.getFolderIndex(), false);
+					documents.stream().forEach(document -> {
+						String nextDest = "";
+						String uploadDocumentPath = "";
+						try {
+							nextDest = folderDestination + System.getProperty("file.separator") + folderUtility.getFolderAncestorAsString(folder.getFolderIndex());
+							File file = new File(nextDest);
+							
+							if(!file.exists()){
+								file.mkdirs();
+								fileLog.write("\n" + nextDest + " Created.");
+							}
+							
+							uploadDocumentPath = nextDest + System.getProperty("file.separator") + document.getDocumentName();
+							documentUtility.exportDocument(uploadDocumentPath, document.getISIndex().substring(0, document.getISIndex().indexOf('#')));
+							
+							fileLog.write("\nThe document " + uploadDocumentPath + " exported successfully." );
+						} catch (DocumentException e) {
+							try {
+								fileLog.write("\nUnable to upload a document called " + nextDest + System.getProperty("file.separator") + uploadDocumentPath );
+							} catch (IOException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+							e.printStackTrace();
+						} catch (FolderException e) {
+							try {
+								fileLog.write("\nUnable to create a folder called " + nextDest );
+							} catch (IOException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+							e.printStackTrace();
+						} catch (IOException e) {
+							e.printStackTrace();
 						}
-						documentUtility.exportDocument(nextDest + "\\" + document.getDocumentName(),
-								document.getISIndex().substring(0, document.getISIndex().indexOf('#')));
-					} catch (DocumentException e) {
-						e.printStackTrace();
+					});
+					
+				} catch (DocumentException e) {
+					try {
+						fileLog.write("Unable to get a document list" );
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
 					}
-				});
-				
-			} catch (DocumentException e) {
-				e.printStackTrace();
-			}
-		});
-		
-		System.out.println("exportTaskFoldersWithDocuments Task Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+ " s");
-
+					e.printStackTrace();
+				}
+			});
+			
+			System.out.println("exportTaskFoldersWithDocuments Task Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+ " s");
+		}
 	}
 	
 	private String resolveInvlidFilenameChars(String filename) {
@@ -333,13 +373,9 @@ public class OpexModel {
 		return NGOHelper.getResponseAsPOJO(class1, new String(Files.readAllBytes(file.toPath())));
 	}
 
-	public boolean existance(String folderName) throws Exception {
-		OmniService omniService = new OmniService("192.168.60.148", 3333, true);
-		omniService.openCabinetSession("mabuodeh", "etech123", "jlgccab1", false, "S");
-
-		List<Folder> folders = omniService.getFolderUtility().findFolderByName(folderName);
+	public boolean existance(OmniService omniService, String folderName) throws Exception {
 		
-		omniService.complete();
+		List<Folder> folders = omniService.getFolderUtility().findFolderByName(folderName);
 		
 		return folders.size() > 0? true: false;
 		

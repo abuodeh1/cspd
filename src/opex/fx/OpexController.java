@@ -4,8 +4,10 @@ import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import etech.omni.OmniService;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -30,6 +32,8 @@ public class OpexController implements Initializable {
 	@FXML private TextField openXMLTextField;
 
 	private TreeItem<OpexRowWrapper> root;
+	
+	private OmniService omniService;
 		
 	private FileChooser fileChooser;
 	
@@ -40,6 +44,14 @@ public class OpexController implements Initializable {
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		
+		omniService = new OmniService("192.168.60.148", 3333, true);
+		try {
+			omniService.openCabinetSession("mabuodeh", "etech123", "jlgccab1", false, "S");
+		} catch (Exception e) {
+			errorAlert("OmniDocs Connection Error.", e);
+			e.printStackTrace();
+		}
+
 		root = new TreeItem<>(new OpexRowWrapper());
 		fileChooser = new FileChooser();
 		batch = new Batch();
@@ -79,7 +91,9 @@ public class OpexController implements Initializable {
 		
 		try {
 			
-			opexModel.uploadDocumentsToOmnidocs(openXMLTextField.getText());
+			opexModel.uploadDocumentsToOmnidocs(omniService, openXMLTextField.getText());
+			
+			//opexModel.exportTaskWithSubfolder(omniService, "108", "D:\\temp1");
 		    
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -118,18 +132,23 @@ public class OpexController implements Initializable {
 			TreeItem<OpexRowWrapper> transactiontTreeItem = new TreeItem<>(new OpexRowWrapper("Agg. Total For (" + String.valueOf(transaction.getTransactionID()) + ")", String.valueOf(transaction.getGroup().size()), String.valueOf("0"), String.valueOf("0") ));
 			transaction.getGroup().forEach(group -> {
 				TreeItem<OpexRowWrapper> groupTreeItem = new TreeItem<>(new OpexRowWrapper(String.valueOf(transaction.getTransactionID()), String.valueOf(group.getGroupID()), String.valueOf(group.getPage().size()), String.valueOf("0")));
-				Thread thread = new Thread(new Runnable() {
-					
+				
+				Task<Void> task = new Task<Void>() {
+
 					@Override
-					public void run() {
+					protected Void call() throws Exception {
 						try {
-							groupTreeItem.getValue().setExistence( String.valueOf( opexModel.existance(String.valueOf(group.getGroupID()))? "Added Before": "New") );
+							groupTreeItem.getValue().setExistence( String.valueOf( opexModel.existance(omniService, String.valueOf(group.getGroupID()))? "Added Before": "New") );
 						} catch (Exception e) {
 							groupTreeItem.getValue().setExistence(e.getLocalizedMessage());
 						}
+						return null;
 					}
-				});
+				};
+
+				Thread thread = new Thread(task);
 				thread.start();
+				
 				group.getPage().forEach(page -> {
 					groupTreeItem.getChildren().add( new TreeItem<>( new OpexRowWrapper(String.valueOf(transaction.getTransactionID()), String.valueOf(group.getGroupID()), String.valueOf("1"), String.valueOf(page.getImage().size()) ) ) );
 					groupTreeItem.getValue().setNumberOfImages(String.valueOf( Integer.valueOf(groupTreeItem.getValue().getNumberOfImages().get()) + page.getImage().size()) );
@@ -140,7 +159,6 @@ public class OpexController implements Initializable {
 				try {
 					thread.join();
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				transactiontTreeItem.getChildren().add(groupTreeItem);
