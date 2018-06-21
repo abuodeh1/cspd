@@ -263,7 +263,7 @@ public class OpexModel {
 		switch (dataDefinitionType) {
 
 		case 1:
-			dataDefinition = omniService.getDataDefinitionUtility().getDataDefinition("passport");
+			dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("passport");
 			dataDefinition.getFields().get("Holder Name").setIndexValue(batchDetails.getName());
 			dataDefinition.getFields().get("Old Folder Number").setIndexValue(batchDetails.getFileNumber());
 			dataDefinition.getFields().get("New Folder Number").setIndexValue(batchDetails.getSerialNumber());
@@ -274,19 +274,19 @@ public class OpexModel {
 			break;
 
 		case 2:
-			dataDefinition = omniService.getDataDefinitionUtility().getDataDefinition("civil");
+			dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("civil");
 			dataDefinition.getFields().get("status").setIndexValue(batchDetails.getName());
 
 			break;
 
 		case 3:
-			dataDefinition = omniService.getDataDefinitionUtility().getDataDefinition("vital");
+			dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("vital");
 			dataDefinition.getFields().get("barcode").setIndexValue(String.valueOf(fileID));
 
 			break;
 
 		case 4:
-			dataDefinition = omniService.getDataDefinitionUtility().getDataDefinition("embassiess");
+			dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("embassiess");
 			dataDefinition.getFields().get("barcode").setIndexValue(String.valueOf(fileID));
 
 			break;
