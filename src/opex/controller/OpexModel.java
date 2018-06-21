@@ -19,13 +19,14 @@ import etech.dms.exception.FolderException;
 import etech.dms.util.DocumentUtility;
 import etech.dms.util.FolderUtility;
 import etech.omni.OmniService;
+import etech.omni.core.DataDefinition;
+import etech.omni.core.Document;
+import etech.omni.core.Field;
+import etech.omni.core.Folder;
 import etech.omni.helper.NGOHelper;
 import etech.resource.pool.PoolFactory;
 import etech.resource.pool.PoolService;
-import omnidocs.pojo.DataDefinition;
-import omnidocs.pojo.Document;
-import omnidocs.pojo.Field;
-import omnidocs.pojo.Folder;
+import javafx.concurrent.Task;
 import opex.element.Batch;
 import opex.element.Batch.Transaction;
 import opex.element.Batch.Transaction.Group;
@@ -38,102 +39,111 @@ public class OpexModel {
 	
 	Batch batch;
 	
-	public OpexModel(MainController mainController, Batch batch) {
-		this.batch = batch;		
-		this.mainController = mainController;
+	public OpexModel() {
 		//String folderDestination = "D:\\temp1\\";
 	}
 
 	public void uploadDocumentsToOmnidocs(OmniService omniService, String filePath) throws Exception {
 		
-		try(FileWriter fileLog = new FileWriter(new File(filePath).getParent()+"\\log.txt", true)) {
-			
-			String parentFolderID = "116";
-			
-			// read opex xml
-	
-			Batch batch = NGOHelper.getResponseAsPOJO(Batch.class, new String(Files.readAllBytes(new File(filePath).toPath())));
-			String scanFolderPath = batch.getImageFilePath();
-	
-			// fetch metadata from database from index per file
-	
-			long startDate = System.currentTimeMillis();
-	
-			Iterator<Transaction> transactions = batch.getTransaction().iterator();
-	
-			while (transactions.hasNext()) {
-	
-				Transaction transaction = transactions.next();
-	
-				Iterator<Group> groups = transaction.getGroup().iterator();
-	
-				while (groups.hasNext()) {
-	
-					Group group = groups.next();
-					
-					long fileID = group.getGroupID();
+		long startDate = System.currentTimeMillis();
+		
+		String parentFolderID = "116";
+		
+		// read opex xml
 
-					int dataDefinitionType = 1;
-	
-					String serialNumber = "018/01/00000" + String.valueOf(fileID);
-	
-					Folder folder = new Folder();
-					folder.setFolderName(serialNumber);					
-					folder.setParentFolderIndex(parentFolderID);
+		Batch batch = NGOHelper.getResponseAsPOJO(Batch.class, new String(Files.readAllBytes(new File(filePath).toPath())));
+		String scanFolderPath = batch.getImageFilePath();
+
+		// fetch metadata from database from index per file
+
+		Iterator<Transaction> transactions = batch.getTransaction().iterator();
+
+		while (transactions.hasNext()) {
+
+			Transaction transaction = transactions.next();
+
+			Iterator<Group> groups = transaction.getGroup().iterator();
+
+			while (groups.hasNext()) {
+
+				Group group = groups.next();
+				
+				long fileID = group.getGroupID();
+
+				int dataDefinitionType = 1;
+
+				String serialNumber = "018/01/00000" + String.valueOf(fileID);
+
+				Folder folder = new Folder();
+				folder.setFolderName(serialNumber);					
+				folder.setParentFolderIndex(parentFolderID);
+				
+				List<Folder> folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, folder.getFolderName());
+				Folder searchFolderRs = folderRs.size() > 0 ? folderRs.get(0): null;
+
+				if(searchFolderRs != null) {
+					//fileLog.write("\nFolder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
+					writeLog("Folder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
+					//System.out.println("Folder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
+					continue;
+				}
+				
+				folder.setDataDefinition(prepareDataDefinition(omniService, dataDefinitionType, serialNumber));
+				
+				Folder addedFolder = omniService.getFolderUtility().addFolder(parentFolderID, folder);
+
+				Iterator<Page> pages = group.getPage().iterator();
+				
+				while (pages.hasNext()) {
+
+					Page page = pages.next();
 					
-					List<Folder> folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, folder.getFolderName());
-					Folder searchFolderRs = folderRs.size() > 0 ? folderRs.get(0): null;
-	
-					if(searchFolderRs != null) {
-						fileLog.write("\nFolder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
-						mainController.getLoggerTextArea().appendText("\nFolder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
-						//System.out.println("Folder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
-						continue;
-					}
+					Iterator<Image> images = page.getImage().iterator();
 					
-					folder.setDataDefinition(prepareDataDefinition(omniService, dataDefinitionType, serialNumber));
+					while (images.hasNext()) {
 					
-					Folder addedFolder = omniService.getFolderUtility().addFolder(parentFolderID, folder);
-	
-					Iterator<Page> pages = group.getPage().iterator();
-					
-					while (pages.hasNext()) {
-	
-						Page page = pages.next();
+						Image image = images.next();
 						
-						Iterator<Image> images = page.getImage().iterator();
+						Document document = new Document();							
+						document.setParentFolderIndex(addedFolder.getFolderIndex());							
+						document.setDocumentName(image.getFilename());
 						
-						while (images.hasNext()) {
+						String imagePath = scanFolderPath + System.getProperty("file.separator") + image.getFilename();
 						
-							Image image = images.next();
+						try {
+							omniService.getDocumentUtility().addDocument(new File(imagePath), document);
 							
-							Document document = new Document();							
-							document.setParentFolderIndex(addedFolder.getFolderIndex());							
-							document.setDocumentName(image.getFilename());
+							//fileLog.write("\n" + imagePath + " uploaded successfuly.");
+							writeLog(imagePath + " uploaded successfuly.");
+						} catch (DocumentException e) {
 							
-							String imagePath = scanFolderPath + System.getProperty("file.separator") + image.getFilename();
-							
-							try {
-								omniService.getDocumentUtility().addDocument(new File(imagePath), document);
-								
-								fileLog.write("\n" + imagePath + " uploaded successfuly.");
-								mainController.getLoggerTextArea().appendText("\n" + imagePath + " uploaded successfuly.");
-							} catch (DocumentException e) {
-								
-								fileLog.write("\nUnable to upload " + imagePath);
-								mainController.getLoggerTextArea().appendText("\nUnable to upload " + imagePath);
-								e.printStackTrace();
-							}
+							//fileLog.write("\nUnable to upload " + imagePath);
+							writeLog("Unable to upload " + imagePath);
+							e.printStackTrace();
 						}
-	
 					}
+
 				}
 			}
-
-			//System.out.println( "Time Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate));
-			fileLog.write("\nTime Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+".\n");
-			mainController.getLoggerTextArea().appendText("\nTime Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+".\n");
 		}
+
+		//System.out.println( "Time Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate));
+		//fileLog.write("\nTime Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+".\n");
+		
+		writeLog("Time Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+".");
+	}
+	
+	private void writeLog(String msg) {
+		
+		Task task = new Task<Void>() {
+
+			@Override
+			protected Void call() throws Exception {
+				mainController.getLoggerTextArea().appendText("\n" + msg);
+				return null;
+			}
+		};
+		new Thread(task).start();
 	}
 
 	public void exportTaskWithoutSubfolder(OmniService omniService, String folderID, String folderDestination) throws Exception {
@@ -389,6 +399,10 @@ public class OpexModel {
 		
 		return folders.size() > 0? true: false;
 		
+	}
+
+	public void injectMainController(MainController mainController) {
+		this.mainController = mainController;
 	}
 
 }

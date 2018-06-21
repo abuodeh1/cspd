@@ -1,17 +1,16 @@
 package opex.controller;
 
 import java.io.File;
-import java.net.URL;
-import java.util.ResourceBundle;
+import java.io.FileWriter;
 
 import etech.omni.OmniService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
@@ -20,7 +19,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import opex.element.Batch;
 
-public class OpexController implements Initializable {
+public class OpexController {
 	
 	private MainController mainController;
 	
@@ -31,6 +30,7 @@ public class OpexController implements Initializable {
 	@FXML private TreeTableColumn<OpexRowWrapper, String> existenceClm;
 	@FXML private TreeTableView<OpexRowWrapper> treeTableView; 
 	@FXML private TextField openXMLTextField;
+	@FXML private Button uploadToOmnidocsButton;
 
 	private TreeItem<OpexRowWrapper> root;
 	
@@ -41,23 +41,23 @@ public class OpexController implements Initializable {
 	private Batch batch;
 	
 	private OpexModel opexModel;
+	
+	private File opexFile;
 
-	@Override
-	public void initialize(URL location, ResourceBundle resources) {
+	@FXML private void initialize() {
 		
-		/*omniService = new OmniService("192.168.60.148", 3333, true);
+		omniService = new OmniService("192.168.60.148", 3333, true);
 		try {
 			omniService.openCabinetSession("mabuodeh", "etech123", "jlgccab1", false, "S");
 		} catch (Exception e) {
-			errorAlert("OmniDocs Connection Error.", e);
+			mainController.errorAlert("OmniDocs Connection Error.", e);
 			e.printStackTrace();
-		}*/
+		}
 
 		root = new TreeItem<>(new OpexRowWrapper());
 		fileChooser = new FileChooser();
 		batch = new Batch();
-		
-		opexModel = new OpexModel(mainController, batch);
+		opexModel = new OpexModel();
 		
 		transactionClm.setCellValueFactory((TreeTableColumn.CellDataFeatures<OpexRowWrapper, String> param) -> param.getValue().getValue().getTransactionID() );
 		groupClm.setCellValueFactory((TreeTableColumn.CellDataFeatures<OpexRowWrapper, String> param) -> param.getValue().getValue().getGroupID() );
@@ -77,6 +77,7 @@ public class OpexController implements Initializable {
 	
 	public void injectMainController(MainController mainController) {
 		this.mainController = mainController;
+		opexModel.injectMainController(mainController);
 	}
 	
 	@FXML
@@ -84,15 +85,40 @@ public class OpexController implements Initializable {
 		
 		try {
 			
-			mainController.getLoggerTextArea().appendText("\nUpload Started...");
-			opexModel.uploadDocumentsToOmnidocs(omniService, openXMLTextField.getText());
-			mainController.getLoggerTextArea().appendText("\nUpload Finished...");
+			Task<Void> task = new Task<Void>() {
+				
+				@Override
+				protected Void call() throws Exception {
+					
+					mainController.getLoggerTextArea().appendText("\nUpload Started...");
+					uploadToOmnidocsButton.setDisable(true);
+					opexModel.uploadDocumentsToOmnidocs(omniService, openXMLTextField.getText());
+					Thread.sleep(50);
+					mainController.getLoggerTextArea().appendText("\nUpload Finished...");
+
+					return null;
+				}
+			};
+			
+			Thread taskThread = new Thread(task);
+			taskThread.start();
+			
+			task.setOnSucceeded(e -> {
+				mainController.msgAlert("The upload task completed.");
+				uploadToOmnidocsButton.setDisable(false);
+			});
+
+			task.setOnFailed(e -> uploadToOmnidocsButton.setDisable(false));
+
+			task.setOnCancelled(e -> uploadToOmnidocsButton.setDisable(false));
+
+			
 			
 			//opexModel.exportTaskWithSubfolder(omniService, "108", "D:\\temp1");
 		    
 		} catch (Exception e) {
-			e.printStackTrace();
-			errorAlert("Error Communication ...", e);
+			//e.printStackTrace();
+			mainController.errorAlert("Error Communication ...", e);
 		}
 	}
 	
@@ -100,22 +126,22 @@ public class OpexController implements Initializable {
 	private void handleOpexFileChooserButton(ActionEvent event){
 		
 		fileChooser.getExtensionFilters().addAll(new ExtensionFilter("Opex Scanner XML Files", "*.xml"));
-		File file = fileChooser.showOpenDialog(null);
+		opexFile = fileChooser.showOpenDialog(null);
 		
-		if(file != null) {
+		if(opexFile != null) {
 			try {
 				
-				batch = OpexModel.getResponseAsPOJO(Batch.class, file);
+				batch = OpexModel.getResponseAsPOJO(Batch.class, opexFile);
 			
 				opexModel.setBatch(batch);
-				openXMLTextField.setText(file.getAbsolutePath());
+				openXMLTextField.setText(opexFile.getAbsolutePath());
 			
 				root.getChildren().clear();
 				
 				populateTreeTable();
 				
 			} catch (Exception e) {
-				errorAlert("Unable to read the file ...", e);
+				mainController.errorAlert("Unable to read the file ...", e);
 			}
 			
 		}
@@ -162,21 +188,7 @@ public class OpexController implements Initializable {
 		});
 				
 	}
-	
-	private void errorAlert(String headerText, Exception e) {
 
-		if (e != null) {
-			
-		    Alert alert = new Alert(AlertType.ERROR);
-		    alert.setTitle("Error");
-		    alert.setHeaderText(headerText);
-		    alert.setContentText(e.getLocalizedMessage());
-		    alert.showAndWait();
-		}
-
-	}
-
-	
 	class OpexRowWrapper{
 		
 		SimpleStringProperty transactionID;
