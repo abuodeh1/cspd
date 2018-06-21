@@ -21,7 +21,6 @@ import etech.dms.util.FolderUtility;
 import etech.omni.OmniService;
 import etech.omni.core.DataDefinition;
 import etech.omni.core.Document;
-import etech.omni.core.Field;
 import etech.omni.core.Folder;
 import etech.omni.helper.NGOHelper;
 import etech.resource.pool.PoolFactory;
@@ -176,7 +175,7 @@ public class OpexModel {
 		try(FileWriter fileLog = new FileWriter(new File(folderDestination).getParent()+"\\export-log.txt", true)) {
 			long startDate = System.currentTimeMillis();
 	
-			FolderUtility<Folder, DataDefinition, Field> folderUtility = omniService.getFolderUtility();
+			FolderUtility<Folder, DataDefinition> folderUtility = omniService.getFolderUtility();
 			
 			DocumentUtility<Document> documentUtility = omniService.getDocumentUtility();
 	
