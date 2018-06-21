@@ -1,4 +1,4 @@
-package opex.fx;
+package opex.controller;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -19,13 +19,13 @@ import etech.dms.exception.FolderException;
 import etech.dms.util.DocumentUtility;
 import etech.dms.util.FolderUtility;
 import etech.omni.OmniService;
-import etech.omni.core.DataDefinition;
-import etech.omni.core.Document;
-import etech.omni.core.Field;
-import etech.omni.core.Folder;
 import etech.omni.helper.NGOHelper;
 import etech.resource.pool.PoolFactory;
 import etech.resource.pool.PoolService;
+import omnidocs.pojo.DataDefinition;
+import omnidocs.pojo.Document;
+import omnidocs.pojo.Field;
+import omnidocs.pojo.Folder;
 import opex.element.Batch;
 import opex.element.Batch.Transaction;
 import opex.element.Batch.Transaction.Group;
@@ -34,15 +34,18 @@ import opex.element.Batch.Transaction.Group.Page.Image;
 
 public class OpexModel {
 
+	private MainController mainController;
+	
 	Batch batch;
 	
-	public OpexModel(Batch batch) {
+	public OpexModel(MainController mainController, Batch batch) {
 		this.batch = batch;		
+		this.mainController = mainController;
 		//String folderDestination = "D:\\temp1\\";
 	}
 
 	public void uploadDocumentsToOmnidocs(OmniService omniService, String filePath) throws Exception {
-
+		
 		try(FileWriter fileLog = new FileWriter(new File(filePath).getParent()+"\\log.txt", true)) {
 			
 			String parentFolderID = "116";
@@ -83,6 +86,7 @@ public class OpexModel {
 	
 					if(searchFolderRs != null) {
 						fileLog.write("\nFolder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
+						mainController.getLoggerTextArea().appendText("\nFolder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
 						//System.out.println("Folder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
 						continue;
 					}
@@ -113,11 +117,11 @@ public class OpexModel {
 								omniService.getDocumentUtility().addDocument(new File(imagePath), document);
 								
 								fileLog.write("\n" + imagePath + " uploaded successfuly.");
-								
+								mainController.getLoggerTextArea().appendText("\n" + imagePath + " uploaded successfuly.");
 							} catch (DocumentException e) {
 								
 								fileLog.write("\nUnable to upload " + imagePath);
-								
+								mainController.getLoggerTextArea().appendText("\nUnable to upload " + imagePath);
 								e.printStackTrace();
 							}
 						}
@@ -127,7 +131,8 @@ public class OpexModel {
 			}
 
 			//System.out.println( "Time Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate));
-			fileLog.write("Time Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+".\n");
+			fileLog.write("\nTime Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+".\n");
+			mainController.getLoggerTextArea().appendText("\nTime Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+".\n");
 		}
 	}
 
@@ -185,9 +190,11 @@ public class OpexModel {
 							documentUtility.exportDocument(uploadDocumentPath, document.getISIndex().substring(0, document.getISIndex().indexOf('#')));
 							
 							fileLog.write("\nThe document " + uploadDocumentPath + " exported successfully." );
+							mainController.getLoggerTextArea().appendText("\nThe document " + uploadDocumentPath + " exported successfully.");
 						} catch (DocumentException e) {
 							try {
 								fileLog.write("\nUnable to upload a document called " + nextDest + System.getProperty("file.separator") + uploadDocumentPath );
+								mainController.getLoggerTextArea().appendText("\nUnable to upload a document called " + nextDest + System.getProperty("file.separator") + uploadDocumentPath);
 							} catch (IOException e1) {
 								// TODO Auto-generated catch block
 								e1.printStackTrace();
@@ -196,6 +203,7 @@ public class OpexModel {
 						} catch (FolderException e) {
 							try {
 								fileLog.write("\nUnable to create a folder called " + nextDest );
+								mainController.getLoggerTextArea().appendText("\nUnable to create a folder called " + nextDest);
 							} catch (IOException e1) {
 								// TODO Auto-generated catch block
 								e1.printStackTrace();
@@ -209,6 +217,7 @@ public class OpexModel {
 				} catch (DocumentException e) {
 					try {
 						fileLog.write("Unable to get a document list" );
+						mainController.getLoggerTextArea().appendText("Unable to get a document list");
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -218,6 +227,7 @@ public class OpexModel {
 			});
 			
 			System.out.println("exportTaskFoldersWithDocuments Task Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+ " s");
+			mainController.getLoggerTextArea().appendText("exportTaskFoldersWithDocuments Task Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+ " s");
 		}
 	}
 	
@@ -360,7 +370,7 @@ public class OpexModel {
 
 			batch.getTransaction().add(transaction);
 			
-			NGOHelper.postPOJOToXML(Batch.class, "D:\\mywork-sts\\cspd\\src\\opex\\element\\00020150618 141054 102.xml", batch);
+			//NGOHelper.postPOJOToXML(Batch.class, "D:\\mywork-sts\\cspd\\src\\opex\\element\\00020150618 141054 102.xml", batch);
 		}
 		
 	}

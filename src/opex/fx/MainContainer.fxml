@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<VBox prefHeight="600.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="opex.controller.MainController">
+	<children>
+		<MenuBar>
+			<menus>
+				<Menu mnemonicParsing="false" text="File">
+					<items>
+						<MenuItem mnemonicParsing="false" text="New" visible="false" />
+						<MenuItem mnemonicParsing="false" text="Open…" visible="false" />
+						<Menu mnemonicParsing="false" text="Open Recent" visible="false" />
+						<SeparatorMenuItem mnemonicParsing="false" visible="false" />
+						<MenuItem mnemonicParsing="false" text="Close" visible="false" />
+						<MenuItem mnemonicParsing="false" text="Save" visible="false" />
+						<MenuItem mnemonicParsing="false" text="Save As…" visible="false" />
+						<MenuItem mnemonicParsing="false" text="Revert" visible="false" />
+						<SeparatorMenuItem mnemonicParsing="false" visible="false" />
+						<MenuItem mnemonicParsing="false" text="Preferences…" visible="false" />
+						<SeparatorMenuItem mnemonicParsing="false" />
+						<MenuItem mnemonicParsing="false" onAction="#handleQuitMenuItem" text="Quit" />
+					</items>
+				</Menu>
+				<Menu mnemonicParsing="false" text="Edit" visible="false">
+					<items>
+						<MenuItem mnemonicParsing="false" text="Undo" />
+						<MenuItem mnemonicParsing="false" text="Redo" />
+						<SeparatorMenuItem mnemonicParsing="false" />
+						<MenuItem mnemonicParsing="false" text="Cut" />
+						<MenuItem mnemonicParsing="false" text="Copy" />
+						<MenuItem mnemonicParsing="false" text="Paste" />
+						<MenuItem mnemonicParsing="false" text="Delete" />
+						<SeparatorMenuItem mnemonicParsing="false" />
+						<MenuItem mnemonicParsing="false" text="Select All" />
+						<MenuItem mnemonicParsing="false" text="Unselect All" />
+					</items>
+				</Menu>
+				<Menu mnemonicParsing="false" text="Help">
+					<items>
+						<MenuItem mnemonicParsing="false" text="About Etech@DMS Utility" />
+					</items>
+				</Menu>
+			</menus>
+		</MenuBar>
+		<AnchorPane>
+			<children>
+				<TabPane layoutX="12.0" layoutY="14.0" tabClosingPolicy="UNAVAILABLE">
+					<tabs>
+						<Tab text="Opex XML">
+							<content>
+								<fx:include fx:id="opexTab" source="OpexTab.fxml" />
+							</content>
+						</Tab>
+						<Tab text="Logger">
+							<content>
+								<fx:include fx:id="loggerTab" source="LoggerTab.fxml" />
+							</content>
+						</Tab>
+					</tabs>
+				</TabPane>
+			</children>
+		</AnchorPane>
+	</children>
+</VBox>

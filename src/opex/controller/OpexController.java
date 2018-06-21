@@ -1,11 +1,10 @@
-package opex.fx;
+package opex.controller;
 
 import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 import etech.omni.OmniService;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
@@ -22,6 +21,8 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import opex.element.Batch;
 
 public class OpexController implements Initializable {
+	
+	private MainController mainController;
 	
 	@FXML private TreeTableColumn<OpexRowWrapper, String> transactionClm;
 	@FXML private TreeTableColumn<OpexRowWrapper, String> groupClm;
@@ -44,19 +45,19 @@ public class OpexController implements Initializable {
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		
-		omniService = new OmniService("192.168.60.148", 3333, true);
+		/*omniService = new OmniService("192.168.60.148", 3333, true);
 		try {
 			omniService.openCabinetSession("mabuodeh", "etech123", "jlgccab1", false, "S");
 		} catch (Exception e) {
 			errorAlert("OmniDocs Connection Error.", e);
 			e.printStackTrace();
-		}
+		}*/
 
 		root = new TreeItem<>(new OpexRowWrapper());
 		fileChooser = new FileChooser();
 		batch = new Batch();
 		
-		opexModel = new OpexModel(batch);
+		opexModel = new OpexModel(mainController, batch);
 		
 		transactionClm.setCellValueFactory((TreeTableColumn.CellDataFeatures<OpexRowWrapper, String> param) -> param.getValue().getValue().getTransactionID() );
 		groupClm.setCellValueFactory((TreeTableColumn.CellDataFeatures<OpexRowWrapper, String> param) -> param.getValue().getValue().getGroupID() );
@@ -74,16 +75,8 @@ public class OpexController implements Initializable {
 	
 	}
 	
-	@FXML
-	private void handleOpenMenuItem(ActionEvent event){
-//		fileChooser.getExtensionFilters().addAll(new ExtensionFilter("Opex Scanner XML Files", "*.xml"));
-//		File file = fileChooser.showOpenDialog(null);
-	}
-	
-	@FXML
-	private void handleQuitMenuItem(ActionEvent event){
-		Platform.exit();
-		System.exit(0);
+	public void injectMainController(MainController mainController) {
+		this.mainController = mainController;
 	}
 	
 	@FXML
@@ -91,7 +84,9 @@ public class OpexController implements Initializable {
 		
 		try {
 			
+			mainController.getLoggerTextArea().appendText("\nUpload Started...");
 			opexModel.uploadDocumentsToOmnidocs(omniService, openXMLTextField.getText());
+			mainController.getLoggerTextArea().appendText("\nUpload Finished...");
 			
 			//opexModel.exportTaskWithSubfolder(omniService, "108", "D:\\temp1");
 		    
