@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NGOAddFolder_Output>
+	<Option>NGOAddFolder</Option>
+	<Status>0</Status>
+	<Folder>
+		<FolderIndex>698</FolderIndex>
+		<ParentFolderIndex>649</ParentFolderIndex>
+		<NoOfSubFolders>0</NoOfSubFolders>
+		<NoOfDocuments>0</NoOfDocuments>
+		<NoOfReferencedDocuments>0</NoOfReferencedDocuments>
+		<FolderName>Leave Applications</FolderName>
+		<Owner>Anand</Owner>
+		<OwnerIndex>75</OwnerIndex>
+		<CreationDateTime>2001-09-27 18:45:29.337</CreationDateTime>
+		<RevisedDateTime>2001-09-27 18:45:29.337</RevisedDateTime>
+		<AccessDateTime>2001-09-27 18:45:29.337</AccessDateTime>
+		<DeletedDateTime>2099-12-31 00:00:00.000</DeletedDateTime>
+		<AccessType>S</AccessType>
+		<ImageVolumeIndex>16</ImageVolumeIndex>
+		<FolderType>G</FolderType>
+		<FolderLock>N</FolderLock>
+		<LockByUser>NULL</LockByUser>
+		<MappedDirectory />
+		<Location>G</Location>
+		<ExpiryDateTime>2099-12-31 00:00:00.000</ExpiryDateTime>
+		<VersionFlag>Y</VersionFlag>
+		<Comment>Not Defined</Comment>
+		<FinalizedFlag>N</FinalizedFlag>
+		<FinalizedBy>NULL</FinalizedBy>
+		<FinalizedDateTime>2099-12-31 00:00:00.000</FinalizedDateTime>
+		<LoginUserRights>1111111</LoginUserRights>
+		<ACLMoreFlag>N</ACLMoreFlag>
+		<EnableFTSFlag>Y</EnableFTSFlag>
+		<DataDefinition>
+			<DataDefIndex>0</DataDefIndex>
+			<DataDefName>Hello</DataDefName>
+			<Fields>
+				<Field>
+					<IndexId>1</IndexId>
+					<IndexName>f1</IndexName>
+					<IndexType>S</IndexType>
+					<IndexValue>SValue</IndexValue>
+					<IndexLength>20</IndexLength>
+					<IndexAttribute>0</IndexAttribute>
+					<UsefulInfoFlag>N</UsefulInfoFlag>
+					<UsefulInfoSize>0</UsefulInfoSize>
+					<IndexFlag>F</IndexFlag>
+				</Field>
+				<Field>
+					<IndexId>1</IndexId>
+					<IndexName>f2</IndexName>
+					<IndexType>S</IndexType>
+					<IndexValue>SValue df dsfdf </IndexValue>
+					<IndexLength>20</IndexLength>
+					<IndexAttribute>0</IndexAttribute>
+					<UsefulInfoFlag>Y</UsefulInfoFlag>
+					<UsefulInfoSize>0</UsefulInfoSize>
+					<IndexFlag>F</IndexFlag>
+				</Field>
+				<Field>
+					<IndexId>1</IndexId>
+					<IndexName>f3</IndexName>
+					<IndexType>S</IndexType>
+					<IndexValue>SValuefd ad</IndexValue>
+					<IndexLength>20</IndexLength>
+					<IndexAttribute>0</IndexAttribute>
+					<UsefulInfoFlag>O</UsefulInfoFlag>
+					<UsefulInfoSize>0</UsefulInfoSize>
+					<IndexFlag>F</IndexFlag>
+				</Field>
+			</Fields>
+		</DataDefinition>
+	</Folder>
+</NGOAddFolder_Output>

@@ -1,0 +1,127 @@
+<?xml version="1.0" ?>
+<NGOConnectCabinet_Output>
+	<Option>NGOConnectCabinet</Option>
+	<Status>0</Status>
+	<LeftLoginAttempts>5</LeftLoginAttempts>
+	<UserDBId>-820513883</UserDBId>
+	<Folders>
+		<Folder>
+			<FolderIndex>0</FolderIndex>
+			<ParentFolderIndex>-1</ParentFolderIndex>
+			<FolderName>devcab04</FolderName>
+			<OwnerIndex>1</OwnerIndex>
+			<CreationDateTime>2018-01-07 16:27:51.0</CreationDateTime>
+			<RevisedDateTime>2018-05-15 14:21:43.0</RevisedDateTime>
+			<AccessDateTime>2018-05-31 14:41:25.0</AccessDateTime>
+			<DataDefIndex>0</DataDefIndex>
+			<AccessType>S</AccessType>
+			<ImageVolumeIndex>1</ImageVolumeIndex>
+			<FolderType>G</FolderType>
+			<FolderLock>N</FolderLock>
+			<Location>R</Location>
+			<DeletedDateTime>2099-12-31 00:00:00.0</DeletedDateTime>
+			<VersionFlag>N</VersionFlag>
+			<ExpiryDateTime>2099-12-31 00:00:00.0</ExpiryDateTime>
+			<Comment></Comment>
+			<ACL>G1#010000011,U2#011111011,</ACL>
+			<FinalizedFlag>N</FinalizedFlag>
+			<FinalizedDateTime>2018-01-07 16:27:51.0</FinalizedDateTime>
+			<ACLMoreFlag>N</ACLMoreFlag>
+			<LoginUserRights>1111111111</LoginUserRights>
+			<Owner>Supervisor</Owner>
+			<NoOfDocuments>0</NoOfDocuments>
+			<NoOfSubFolders>1</NoOfSubFolders>
+		</Folder>
+		<Folder>
+			<FolderIndex>10</FolderIndex>
+			<ParentFolderIndex>3</ParentFolderIndex>
+			<FolderName>User_InBox_Supervisor2</FolderName>
+			<OwnerIndex>2</OwnerIndex>
+			<CreationDateTime>2018-01-07 16:27:51.0</CreationDateTime>
+			<RevisedDateTime>2018-01-07 16:27:51.0</RevisedDateTime>
+			<AccessDateTime>2018-01-07 16:27:51.0</AccessDateTime>
+			<DataDefIndex>0</DataDefIndex>
+			<AccessType>S</AccessType>
+			<ImageVolumeIndex>0</ImageVolumeIndex>
+			<FolderType>I</FolderType>
+			<FolderLock>N</FolderLock>
+			<Location>I</Location>
+			<DeletedDateTime>2099-12-31 00:00:00.0</DeletedDateTime>
+			<VersionFlag>N</VersionFlag>
+			<ExpiryDateTime>2099-12-31 00:00:00.0</ExpiryDateTime>
+			<Comment></Comment>
+			<FinalizedFlag>N</FinalizedFlag>
+			<FinalizedDateTime>2018-01-07 16:27:51.0</FinalizedDateTime>
+			<ACLMoreFlag>N</ACLMoreFlag>
+			<LoginUserRights>1111111111</LoginUserRights>
+			<Owner>supervisor2</Owner>
+		</Folder>
+		<Folder>
+			<FolderIndex>11</FolderIndex>
+			<ParentFolderIndex>4</ParentFolderIndex>
+			<FolderName>User_SentItem_Supervisor2</FolderName>
+			<OwnerIndex>2</OwnerIndex>
+			<CreationDateTime>2018-01-07 16:27:51.0</CreationDateTime>
+			<RevisedDateTime>2018-01-07 16:27:51.0</RevisedDateTime>
+			<AccessDateTime>2018-01-07 16:27:51.0</AccessDateTime>
+			<DataDefIndex>0</DataDefIndex>
+			<AccessType>P</AccessType>
+			<ImageVolumeIndex>0</ImageVolumeIndex>
+			<FolderType>S</FolderType>
+			<FolderLock>N</FolderLock>
+			<Location>S</Location>
+			<DeletedDateTime>2099-12-31 00:00:00.0</DeletedDateTime>
+			<VersionFlag>N</VersionFlag>
+			<ExpiryDateTime>2099-12-31 00:00:00.0</ExpiryDateTime>
+			<Comment></Comment>
+			<FinalizedFlag>N</FinalizedFlag>
+			<FinalizedDateTime>2018-01-07 16:27:51.0</FinalizedDateTime>
+			<ACLMoreFlag>N</ACLMoreFlag>
+			<LoginUserRights>1111111111</LoginUserRights>
+			<Owner>supervisor2</Owner>
+		</Folder>
+		<Folder>
+			<FolderIndex>12</FolderIndex>
+			<ParentFolderIndex>5</ParentFolderIndex>
+			<FolderName>User_Trash_Supervisor2</FolderName>
+			<OwnerIndex>2</OwnerIndex>
+			<CreationDateTime>2018-01-07 16:27:51.0</CreationDateTime>
+			<RevisedDateTime>2018-05-29 12:20:19.0</RevisedDateTime>
+			<AccessDateTime>2018-05-29 11:41:01.0</AccessDateTime>
+			<DataDefIndex>0</DataDefIndex>
+			<AccessType>P</AccessType>
+			<ImageVolumeIndex>0</ImageVolumeIndex>
+			<FolderType>T</FolderType>
+			<FolderLock>N</FolderLock>
+			<Location>T</Location>
+			<DeletedDateTime>2099-12-31 00:00:00.0</DeletedDateTime>
+			<VersionFlag>N</VersionFlag>
+			<ExpiryDateTime>2099-12-31 00:00:00.0</ExpiryDateTime>
+			<Comment></Comment>
+			<FinalizedFlag>N</FinalizedFlag>
+			<FinalizedDateTime>2018-01-07 16:27:51.0</FinalizedDateTime>
+			<ACLMoreFlag>N</ACLMoreFlag>
+			<LoginUserRights>1111111111</LoginUserRights>
+			<Owner>supervisor2</Owner>
+		</Folder>
+	</Folders>
+	<Cabinet>
+		<CabinetName>devcab04</CabinetName>
+		<CabinetType>B</CabinetType>
+		<CreationDateTime>2018-01-07 16:27:51.0</CreationDateTime>
+		<VersionFlag>N</VersionFlag>
+		<SecurityLevel>2</SecurityLevel>
+		<FTSDatabasePath></FTSDatabasePath>
+		<CabinetLockFlag>N</CabinetLockFlag>
+		<ImageVolumeIndex>1</ImageVolumeIndex>
+		<LoginUserIndex>2</LoginUserIndex>
+		<UserPasswordExpire>N</UserPasswordExpire>
+		<LastLoginTime>2018-06-04 12:44:00.0</LastLoginTime>
+		<IsMakerCheckerEnabled>N</IsMakerCheckerEnabled>
+		<IsAdmin>Y</IsAdmin>
+		<Privileges>1111111111111111</Privileges>
+		<LockByUser></LockByUser>
+	</Cabinet>
+	<Services>
+	</Services>
+</NGOConnectCabinet_Output>

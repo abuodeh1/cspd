@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.text.*?>
+
+<VBox prefHeight="550.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="opex.controller.OpexController">
+  <children>
+    <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="550.0" prefWidth="650.0" VBox.vgrow="ALWAYS">
+      <children>
+            <HBox layoutX="40.0" layoutY="35.0" prefHeight="35.0" prefWidth="537.0" spacing="10.0">
+               <children>
+                  <Label text="File" />
+                  <TextField fx:id="openXMLTextField" disable="true" onAction="#handleOpexFileChooserButton" prefHeight="25.0" prefWidth="426.0" promptText="Choose Opex XML" />
+                  <Button mnemonicParsing="false" onAction="#handleOpexFileChooserButton" text="Choose" />
+               </children>
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </HBox>
+            <TreeTableView fx:id="treeTableView" layoutX="26.0" layoutY="79.0" prefHeight="400.0" prefWidth="600.0">
+              <columns>
+                  <TreeTableColumn fx:id="transactionClm" prefWidth="150.0" text="Transaction" />
+                  <TreeTableColumn fx:id="groupClm" prefWidth="120.0" text="Group" />
+                  <TreeTableColumn fx:id="pagesClm" prefWidth="80.0" text="# of Pages" />
+                  <TreeTableColumn fx:id="imagesClm" text="# of Images" />
+                  <TreeTableColumn fx:id="existenceClm" prefWidth="143.0" text="Existence?" />
+              </columns>
+            </TreeTableView>
+            <HBox layoutX="244.0" layoutY="453.0" />
+            <Button layoutX="266.0" layoutY="491.0" mnemonicParsing="false" onAction="#handleUploadToOmnidocsButton" text="Upload To Omnidocs" />
+      </children>
+    </AnchorPane>
+  </children>
+</VBox>

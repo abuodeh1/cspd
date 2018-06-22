@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Batch MetadataFilename="C:\batches\GRENADA JOB PATCH\00020150618 141054 100\00020150618 141054 100.XML" FormatVersion="" BaseMachine="AS3600_STANDALONE" ScanDevice="Falcon_x64" SoftwareVersion="03.10.226.00" SiteID="SET SYSTEM::MACHINE IDENTIFICATION::LOCATION" CustomerBatchID="" TransportId="00000" BatchIdentifier="20150618 141054 100" JobType="UNSTRUCTURED" OperatingMode="MANUAL_SCAN" JobName="GRENADA JOB PATCH" OperatorName="Operator ManagerLevel" StartDateTime="2015-06-18 14:10:54" ReceiveDate="2015-06-18" ProcessDate="2015-06-18" ImageFilePath="C:\batches\GRENADA JOB PATCH\00020150618 141054 100" PluginMessage="" FixedString="04,01" ODI-DefaultHorizRes="300" ODI-DefaultVertRes="300" ODI-DefaultScanMode="DUPLEX" PageNameFrom1stPage="PATCH2" MicrFrom1stPage="" Ocr1From1stPage="" Ocr2From1stPage="" Ocr3From1stPage="" Ocr4From1stPage="" Ocr5From1stPage="" Barcode1From1stPage="P2" Barcode2From1stPage="" Barcode3From1stPage="" Barcode4From1stPage="" Barcode5From1stPage="" Barcode6From1stPage="" PageRefID1From1stPage="" PageRefID2From1stPage="" PageRefID3From1stPage="">
+	<BatchEndInfo EndTime="2015-06-18 14:11:07" NumImages="6" NumPages="7" NumGroups="3" NumSets="2" BatchWasModified="FALSE"/>
+	<Set ID="1" ImageCount="3" MetadataFilename="" PageNameFrom1stPage="PAGE" MicrFrom1stPage="" Ocr1From1stPage="" Ocr2From1stPage="" Ocr3From1stPage="" Ocr4From1stPage="" Ocr5From1stPage="" Barcode1From1stPage="P1" Barcode2From1stPage="" Barcode3From1stPage="" Barcode4From1stPage="" Barcode5From1stPage="" Barcode6From1stPage="" PageRefID1From1stPage="" PageRefID2From1stPage="" PageRefID3From1stPage="">
+		<Group ID="1" ImageCount="3" MetadataFilename="" PageNameFrom1stPage="PAGE" MicrFrom1stPage="" Ocr1From1stPage="" Ocr2From1stPage="" Ocr3From1stPage="" Ocr4From1stPage="" Ocr5From1stPage="" Barcode1From1stPage="P1" Barcode2From1stPage="" Barcode3From1stPage="" Barcode4From1stPage="" Barcode5From1stPage="" Barcode6From1stPage="" PageRefID1From1stPage="" PageRefID2From1stPage="" PageRefID3From1stPage="">
+			<Page DocumentLocatorNumber="2" SequenceInBatch="1" SequenceInSet="1" SequenceInGroup="1" ODI-GroupSequenceNumber="0001" ScanSequence="2" ScanDateTime="2015-06-18 14:10:55" ItemStatus="VALID" IsVirtual="NO" PageType="STUB" PageName="PATCH1" SubPageName="" OperatorSelect="NO" Bin="1" PageLength="11.723 IN" PageHeight="8.283 IN" EnvelopeDetect="NO" AverageThickness="1.10" SkewDegrees="-0.08" DeskewStatus="NO" PlugInPageMessage="" ODI-PageLevelReserved="" ImageCount="01" MetadataFilename="">
+				<Side Sidename="">
+					<SideFront FrontSideName="FRONT" FrontSideImageCount="1" FrontMetadataFilename="" FrontStreakDetectStatus="INACTIVE"/>
+					<SideBack BackSideName="BACK" BackSideImageCount="0" BackMetadataFilename="" BackStreakDetectStatus="INACTIVE"/>
+					<Image Status="GOOD" Side="FRONT" Type="FULL" Depth="1" Format="PDF" ImageFilename="20150618 141054 100_A.pdf" ImageFullpath="C:\batches\GRENADA JOB PATCH\00020150618 141054 100\20150618 141054 100_A.pdf" ImageFilesize="257752" MetadataFilename="" Length="1655" Height="2344" OffsetLength="0" OffsetHeight="0" ResolutionLength="200" ResolutionHeight="200" Index="1" FinalBlankAreaPercentage="0.000" FinalBlankAreaTester="JOB" FinalBlankAreaDecision="NOT_BLANK" RescanStatus="NOT_RESCAN" ImageSequenceInBatch="1" ImageSequenceInSet="1" ImageSequenceInGroup="1" ImageSequenceInSide="1"/>
+					<Image1 Status="GOOD" Side="FRONT" Type="FULL" Depth="1" Format="PDF" ImageFilename="20150618 141054 100_A.pdf" ImageFullpath="C:\batches\GRENADA JOB PATCH\00020150618 141054 100\20150618 141054 100_A.pdf" ImageFilesize="257752" MetadataFilename="" Length="1655" Height="2344" OffsetLength="0" OffsetHeight="0" ResolutionLength="200" ResolutionHeight="200" Index="1" FinalBlankAreaPercentage="0.000" FinalBlankAreaTester="JOB" FinalBlankAreaDecision="NOT_BLANK" RescanStatus="NOT_RESCAN" ImageSequenceInBatch="1" ImageSequenceInSet="1" ImageSequenceInGroup="1" ImageSequenceInSide="1"/>
+					<Barcode1 Index="1" Side="FRONT" Value="P1" Type="Patch Code" Status="GOOD"/>
+				</Side>
+			</Page>
+			<Page DocumentLocatorNumber="3" SequenceInBatch="2" SequenceInSet="2" SequenceInGroup="2" ODI-GroupSequenceNumber="0001" ScanSequence="3" ScanDateTime="2015-06-18 14:10:56" ItemStatus="VALID" IsVirtual="NO" PageType="PAGE" PageName="PAGE" SubPageName="" OperatorSelect="NO" Bin="3" PageLength="11.017 IN" PageHeight="8.497 IN" EnvelopeDetect="NO" AverageThickness="0.90" SkewDegrees="-0.24" DeskewStatus="YES" PlugInPageMessage="" ODI-PageLevelReserved="" ImageCount="01" MetadataFilename="">
+				<Side Sidename="">
+					<SideFront FrontSideName="FRONT" FrontSideImageCount="1" FrontMetadataFilename="" FrontStreakDetectStatus="INACTIVE"/>
+					<SideBack BackSideName="BACK" BackSideImageCount="0" BackMetadataFilename="" BackStreakDetectStatus="INACTIVE"/>
+				</Side>
+			</Page>
+			<Page DocumentLocatorNumber="4" SequenceInBatch="3" SequenceInSet="3" SequenceInGroup="3" ODI-GroupSequenceNumber="0001" ScanSequence="4" ScanDateTime="2015-06-18 14:10:57" ItemStatus="VALID" IsVirtual="NO" PageType="PAGE" PageName="PAGE" SubPageName="" OperatorSelect="NO" Bin="3" PageLength="11.027 IN" PageHeight="8.500 IN" EnvelopeDetect="NO" AverageThickness="0.90" SkewDegrees="-0.21" DeskewStatus="YES" PlugInPageMessage="" ODI-PageLevelReserved="" ImageCount="01" MetadataFilename="">
+				<Side Sidename="">
+					<SideFront FrontSideName="FRONT" FrontSideImageCount="1" FrontMetadataFilename="" FrontStreakDetectStatus="INACTIVE"/>
+					<SideBack BackSideName="BACK" BackSideImageCount="0" BackMetadataFilename="" BackStreakDetectStatus="INACTIVE"/>
+				</Side>
+			</Page>
+		</Group>
+	</Set>
+	<Set ID="2" ImageCount="3" MetadataFilename="" PageNameFrom1stPage="PAGE" MicrFrom1stPage="" Ocr1From1stPage="" Ocr2From1stPage="" Ocr3From1stPage="" Ocr4From1stPage="" Ocr5From1stPage="" Barcode1From1stPage="P1" Barcode2From1stPage="" Barcode3From1stPage="" Barcode4From1stPage="" Barcode5From1stPage="" Barcode6From1stPage="" PageRefID1From1stPage="" PageRefID2From1stPage="" PageRefID3From1stPage="">
+		<Group ID="1" ImageCount="3" MetadataFilename="" PageNameFrom1stPage="PAGE" MicrFrom1stPage="" Ocr1From1stPage="" Ocr2From1stPage="" Ocr3From1stPage="" Ocr4From1stPage="" Ocr5From1stPage="" Barcode1From1stPage="P1" Barcode2From1stPage="" Barcode3From1stPage="" Barcode4From1stPage="" Barcode5From1stPage="" Barcode6From1stPage="" PageRefID1From1stPage="" PageRefID2From1stPage="" PageRefID3From1stPage="">
+			<Page DocumentLocatorNumber="5" SequenceInBatch="4" SequenceInSet="1" SequenceInGroup="1" ODI-GroupSequenceNumber="0001" ScanSequence="5" ScanDateTime="2015-06-18 14:11:00" ItemStatus="VALID" IsVirtual="NO" PageType="STUB" PageName="PATCH1" SubPageName="" OperatorSelect="NO" Bin="1" PageLength="11.697 IN" PageHeight="8.283 IN" EnvelopeDetect="NO" AverageThickness="1.10" SkewDegrees="-0.00" DeskewStatus="NO" PlugInPageMessage="" ODI-PageLevelReserved="" ImageCount="01" MetadataFilename="">
+				<Side Sidename="">
+					<SideFront FrontSideName="FRONT" FrontSideImageCount="1" FrontMetadataFilename="" FrontStreakDetectStatus="INACTIVE"/>
+					<SideBack BackSideName="BACK" BackSideImageCount="0" BackMetadataFilename="" BackStreakDetectStatus="INACTIVE"/>
+					<Image Status="GOOD" Side="FRONT" Type="FULL" Depth="1" Format="PDF" ImageFilename="20150618 141054 100_B.pdf" ImageFullpath="C:\batches\GRENADA JOB PATCH\00020150618 141054 100\20150618 141054 100_B.pdf" ImageFilesize="370883" MetadataFilename="" Length="1657" Height="2340" OffsetLength="0" OffsetHeight="0" ResolutionLength="200" ResolutionHeight="200" Index="1" FinalBlankAreaPercentage="0.000" FinalBlankAreaTester="JOB" FinalBlankAreaDecision="NOT_BLANK" RescanStatus="NOT_RESCAN" ImageSequenceInBatch="2" ImageSequenceInSet="1" ImageSequenceInGroup="1" ImageSequenceInSide="1"/>
+					<Image1 Status="GOOD" Side="FRONT" Type="FULL" Depth="1" Format="PDF" ImageFilename="20150618 141054 100_B.pdf" ImageFullpath="C:\batches\GRENADA JOB PATCH\00020150618 141054 100\20150618 141054 100_B.pdf" ImageFilesize="370883" MetadataFilename="" Length="1657" Height="2340" OffsetLength="0" OffsetHeight="0" ResolutionLength="200" ResolutionHeight="200" Index="1" FinalBlankAreaPercentage="0.000" FinalBlankAreaTester="JOB" FinalBlankAreaDecision="NOT_BLANK" RescanStatus="NOT_RESCAN" ImageSequenceInBatch="2" ImageSequenceInSet="1" ImageSequenceInGroup="1" ImageSequenceInSide="1"/>
+					<Barcode1 Index="1" Side="FRONT" Value="P1" Type="Patch Code" Status="GOOD"/>
+				</Side>
+			</Page>
+			<Page DocumentLocatorNumber="6" SequenceInBatch="5" SequenceInSet="2" SequenceInGroup="2" ODI-GroupSequenceNumber="0001" ScanSequence="6" ScanDateTime="2015-06-18 14:11:01" ItemStatus="VALID" IsVirtual="NO" PageType="PAGE" PageName="PAGE" SubPageName="" OperatorSelect="NO" Bin="3" PageLength="11.703 IN" PageHeight="8.277 IN" EnvelopeDetect="NO" AverageThickness="1.10" SkewDegrees="1.12" DeskewStatus="YES" PlugInPageMessage="" ODI-PageLevelReserved="" ImageCount="01" MetadataFilename="">
+				<Side Sidename="">
+					<SideFront FrontSideName="FRONT" FrontSideImageCount="1" FrontMetadataFilename="" FrontStreakDetectStatus="INACTIVE"/>
+					<SideBack BackSideName="BACK" BackSideImageCount="0" BackMetadataFilename="" BackStreakDetectStatus="INACTIVE"/>
+				</Side>
+			</Page>
+			<Page DocumentLocatorNumber="7" SequenceInBatch="6" SequenceInSet="3" SequenceInGroup="3" ODI-GroupSequenceNumber="0001" ScanSequence="7" ScanDateTime="2015-06-18 14:11:01" ItemStatus="VALID" IsVirtual="NO" PageType="PAGE" PageName="PAGE" SubPageName="" OperatorSelect="NO" Bin="3" PageLength="10.997 IN" PageHeight="8.500 IN" EnvelopeDetect="NO" AverageThickness="0.90" SkewDegrees="-0.03" DeskewStatus="NO" PlugInPageMessage="" ODI-PageLevelReserved="" ImageCount="01" MetadataFilename="">
+				<Side Sidename="">
+					<SideFront FrontSideName="FRONT" FrontSideImageCount="1" FrontMetadataFilename="" FrontStreakDetectStatus="INACTIVE"/>
+					<SideBack BackSideName="BACK" BackSideImageCount="0" BackMetadataFilename="" BackStreakDetectStatus="INACTIVE"/>
+				</Side>
+			</Page>
+		</Group>
+	</Set>
+	<Set ID="Illegal original value: " ImageCount="" MetadataFilename="" PageNameFrom1stPage="" MicrFrom1stPage="" Ocr1From1stPage="" Ocr2From1stPage="" Ocr3From1stPage="" Ocr4From1stPage="" Ocr5From1stPage="" Barcode1From1stPage="" Barcode2From1stPage="" Barcode3From1stPage="" Barcode4From1stPage="" Barcode5From1stPage="" Barcode6From1stPage="" PageRefID1From1stPage="" PageRefID2From1stPage="" PageRefID3From1stPage="">
+		<Group ID="Illegal original value: " ImageCount="" MetadataFilename="" PageNameFrom1stPage="" MicrFrom1stPage="" Ocr1From1stPage="" Ocr2From1stPage="" Ocr3From1stPage="" Ocr4From1stPage="" Ocr5From1stPage="" Barcode1From1stPage="" Barcode2From1stPage="" Barcode3From1stPage="" Barcode4From1stPage="" Barcode5From1stPage="" Barcode6From1stPage="" PageRefID1From1stPage="" PageRefID2From1stPage="" PageRefID3From1stPage="">
+			<Page DocumentLocatorNumber="" SequenceInBatch="Illegal original value: " SequenceInSet="" SequenceInGroup="" ODI-GroupSequenceNumber="" ScanSequence="" ScanDateTime="2015-06-18 14:11:11" ItemStatus="" IsVirtual="" PageType="" PageName="" SubPageName="" OperatorSelect="" Bin="" PageLength="" PageHeight="" EnvelopeDetect="" AverageThickness="" SkewDegrees="" DeskewStatus="" PlugInPageMessage="" ODI-PageLevelReserved="" ImageCount="" MetadataFilename=""/>
+		</Group>
+	</Set>
+</Batch>
