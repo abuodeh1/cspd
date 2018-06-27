@@ -11,15 +11,15 @@ public class MainController {
 
 	@FXML private OpexController opexTabController;
 	@FXML private LoggerController loggerTabController;
+	@FXML private OpexDirectoryTabController opexDirectoryTabController;
 	
 	@FXML public void initialize() {
-		
-		System.out.println("Started km f dnfdk");
 		
 		opexTabController.injectMainController(this);
 		
 		loggerTabController.injectMainController(this);
 		
+		opexDirectoryTabController.injectMainController(this);
 		
 	}
 	

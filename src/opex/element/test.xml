@@ -1,59 +1,41 @@
-<?xml version="1.0"?>
-<NGOGetFolderListExt_Output>
-	<Option>NGOGetFolderListExt</Option>
-	<Status>0</Status>
-	<NoOfRecordsFetched>1</NoOfRecordsFetched>
-	<TotalNoOfRecords>1</TotalNoOfRecords>
-	<ParentFolderIndex>61636</ParentFolderIndex>
-	<Folders>
-		<Folder>
-			<FolderIndex>61639</FolderIndex>
-			<ParentFolderIndex>61637</ParentFolderIndex>
-			<FolderName>0000061</FolderName>
-			<OwnerIndex>4</OwnerIndex>
-			<OwnerInfo>
-				<Index>4</Index>
-				<Name>mabuodeh</Name>
-				<Type>U</Type>
-				<PersonalName>New User</PersonalName>
-				<FamilyName>NULL</FamilyName>
-			</OwnerInfo>
-			<Owner>mabuodeh</Owner>
-			<CreationDateTime>2018-06-14 09:52:49</CreationDateTime>
-			<RevisedDateTime>2018-06-14 10:42:20</RevisedDateTime>
-			<AccessDateTime>2018-06-14 10:32:18</AccessDateTime>
-			<DataDefinition>
-				<DataDefIndex>200</DataDefIndex>
-				<DataDefName>passport</DataDefName>
-			</DataDefinition>
-			<AccessType>S</AccessType>
-			<ImageVolumeIndex>5</ImageVolumeIndex>
-			<FolderType>G</FolderType>
-			<FolderLock>N</FolderLock>
-			<LockByUserId>0</LockByUserId>
-			<LockByUserInfo>
-				<Index>0</Index>
-				<PersonalName>NULL</PersonalName>
-				<FamilyName>NULL</FamilyName>
-			</LockByUserInfo>
-			<Location>G</Location>
-			<DeletedDateTime>2118-06-14 09:54:29</DeletedDateTime>
-			<VersionFlag>N</VersionFlag>
-			<ExpiryDateTime>2118-06-14 09:54:29</ExpiryDateTime>
-			<FinalizedFlag>N</FinalizedFlag>
-			<FinalizedDateTime>2118-06-14 09:54:29</FinalizedDateTime>
-			<ACLMoreFlag>N</ACLMoreFlag>
-			<LoginUserRights>1111111111</LoginUserRights>
-			<FinalizedByUserInfo>
-				<Index>0</Index>
-				<PersonalName>NULL</PersonalName>
-				<FamilyName>NULL</FamilyName>
-			</FinalizedByUserInfo>
-			<EnableFTSFlag>Y</EnableFTSFlag>
-			<NoOfDocuments>0</NoOfDocuments>
-			<NoOfSubFolders>1</NoOfSubFolders>
-			<ISSecureFlag>N</ISSecureFlag>
-			<OwnerType>U</OwnerType>
-		</Folder>
-	</Folders>
-</NGOGetFolderListExt_Output>
+<DataDefinition>
+	<DataDefIndex>2</DataDefIndex>
+	<Fields>
+		<Field>
+			<IndexId>8</IndexId>
+			<IndexName>Year</IndexName>
+			<IndexType>S</IndexType>
+			<IndexValue>45</IndexValue>
+		</Field>
+		<Field>
+			<IndexId>7</IndexId>
+			<IndexName>Document Type</IndexName>
+			<IndexType>S</IndexType>
+			<IndexValue>01</IndexValue>
+		</Field>
+		<Field>
+			<IndexId>4</IndexId>
+			<IndexName>Old Folder Number</IndexName>
+			<IndexType>S</IndexType>
+			<IndexValue>454/45/45</IndexValue>
+		</Field>
+		<Field>
+			<IndexId>3</IndexId>
+			<IndexName>Holder Name</IndexName>
+			<IndexType>S</IndexType>
+			<IndexValue>34</IndexValue>
+		</Field>
+		<Field>
+			<IndexId>5</IndexId>
+			<IndexName>New Folder Number</IndexName>
+			<IndexType>S</IndexType>
+			<IndexValue>018/01/0000061</IndexValue>
+		</Field>
+		<Field>
+			<IndexId>6</IndexId>
+			<IndexName>Office Name</IndexName>
+			<IndexType>S</IndexType>
+			<IndexValue>0000061</IndexValue>
+		</Field>
+	</Fields>
+</DataDefinition>

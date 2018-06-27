@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.text.*?>
+
+<VBox prefHeight="550.0" prefWidth="849.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="opex.controller.OpexDirectoryTabController">
+  <children>
+    <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="550.0" prefWidth="795.0" VBox.vgrow="ALWAYS">
+      <children>
+            <HBox layoutX="40.0" layoutY="35.0" prefHeight="35.0" prefWidth="781.0" spacing="10.0">
+               <children>
+                  <Label text="File" />
+                  <TextField fx:id="openDirectoryTextField" disable="true" prefHeight="25.0" prefWidth="661.0" promptText="Choose The Batch Directory..." />
+                  <Button mnemonicParsing="false" onAction="#handleOpexDirectoryChooserButton" text="Choose" />
+               </children>
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </HBox>
+            <TableView fx:id="opexTable" layoutX="24.0" layoutY="74.0" prefHeight="412.0" prefWidth="805.0">
+              <columns>
+                <TableColumn fx:id="folder" prefWidth="205.0" text="Folder" />
+                <TableColumn fx:id="noOfDocuments" prefWidth="114.0" text="# Of Documents" />
+                <TableColumn fx:id="inOmnidocs" prefWidth="114.0" text="In Omnidocs?" />
+                <TableColumn fx:id="toDocuware" prefWidth="114.0" text="To Docuware?" />
+                <TableColumn fx:id="status" prefWidth="114.0" text="Status" />
+                <TableColumn fx:id="inQueue" prefWidth="114.0" />
+              </columns>
+            </TableView>
+            <HBox layoutX="244.0" layoutY="453.0" />
+      </children>
+    </AnchorPane>
+  </children>
+</VBox>
