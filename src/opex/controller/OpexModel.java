@@ -36,21 +36,65 @@ public class OpexModel {
 
 	private MainController mainController;
 	
-	Batch batch;
+	public OpexModel(MainController mainController) {
+		this.mainController = mainController;
+	}
 	
-	public OpexModel() {
-		//String folderDestination = "D:\\temp1\\";
+	public void uploadFolder(OmniService omniService, String parentFolderID, File folder) throws Exception {
+		
+		String folderPath = folder.getAbsolutePath();
+		
+		String batchOXI = folderPath + folderPath.substring(folderPath.lastIndexOf(System.getProperty("file.separator"))) + ".oxi";
+		
+		Batch batch = readBatchOXI(batchOXI);
+		DataDefinition dataDefinition = prepareDataDefinition(omniService, 1, folder.getName());
+		if(isFolderAdded(omniService, parentFolderID, folder.getName())) {
+			writeLog("The folder (" + batchOXI + ") is already added");
+		}
+		Folder addedFolder = addFolder(omniService, parentFolderID, folder.getName(), dataDefinition);
+		uploadDocumentsToOmnidocs(omniService, batch, dataDefinition, addedFolder);
+		
 	}
 
-	public void uploadDocumentsToOmnidocs(OmniService omniService, String filePath) throws Exception {
+	private Batch readBatchOXI(String filePath) throws Exception {
+
+		Batch batch = null;
+		try {
+			batch = NGOHelper.getResponseAsPOJO(Batch.class, new String(Files.readAllBytes(new File(filePath).toPath())));
+		}catch(Exception fe) {
+			writeLog("Unable to parse " + filePath);
+			throw new Exception(fe);
+		}
+		
+		return batch;
+		
+	}
+	
+	private boolean isFolderAdded(OmniService omniService, String parentFolderID, String fileName) throws FolderException {
+		
+		List<Folder> folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, fileName, false);
+
+		return folderRs.size() > 0;
+	}
+	
+	private Folder addFolder(OmniService omniService, String parentFolderID, String fileName, DataDefinition dataDefinition) throws FolderException {
+		
+		Folder folder = new Folder();
+		folder.setFolderName(fileName);					
+		folder.setParentFolderIndex(parentFolderID);
+		folder.setDataDefinition(dataDefinition);
+		
+		folder = omniService.getFolderUtility().addFolder(parentFolderID, folder);
+
+		return folder;
+	}
+
+	private void uploadDocumentsToOmnidocs(OmniService omniService, Batch batch, DataDefinition dataDefinition, Folder folder) throws Exception {
 		
 		long startDate = System.currentTimeMillis();
 		
-		String parentFolderID = "242";
-		
 		// read opex xml
 
-		Batch batch = NGOHelper.getResponseAsPOJO(Batch.class, new String(Files.readAllBytes(new File(filePath).toPath())));
 		String scanFolderPath = batch.getImageFilePath();
 
 		// fetch metadata from database from index per file
@@ -66,36 +110,7 @@ public class OpexModel {
 			while (groups.hasNext()) {
 
 				Group group = groups.next();
-				
-				long fileID = group.getGroupID();
 
-				int dataDefinitionType = 1;
-
-				String serialNumber = "018/01/00000" + String.valueOf(fileID);
-
-				Folder folder = new Folder();
-				folder.setFolderName(serialNumber);					
-				folder.setParentFolderIndex(parentFolderID);
-				
-				List<Folder> folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, folder.getFolderName(), false);
-				Folder searchFolderRs = folderRs.size() > 0 ? folderRs.get(0): null;
-
-				if(searchFolderRs != null) {
-					//fileLog.write("\nFolder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
-					writeLog("Folder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
-					//System.out.println("Folder ( " + serialNumber + " ) already added before in ( " + searchFolderRs.getCreationDateTime() + " ).");
-					continue;
-				}
-				
-				folder.setDataDefinition(prepareDataDefinition(omniService, dataDefinitionType, serialNumber));
-				Folder addedFolder = null;
-				try {
-					addedFolder = omniService.getFolderUtility().addFolder(parentFolderID, folder);
-				}catch(FolderException fe) {
-					writeLog("Unable to add folder.");
-					throw new Exception(fe);
-				}
-				
 				Iterator<Page> pages = group.getPage().iterator();
 				
 				while (pages.hasNext()) {
@@ -109,19 +124,15 @@ public class OpexModel {
 						Image image = images.next();
 						
 						Document document = new Document();							
-						document.setParentFolderIndex(addedFolder.getFolderIndex());							
+						document.setParentFolderIndex(folder.getFolderIndex());							
 						document.setDocumentName(image.getFilename());
 						
 						String imagePath = scanFolderPath + System.getProperty("file.separator") + image.getFilename();
 						
 						try {
 							omniService.getDocumentUtility().addDocument(new File(imagePath), document);
-							
-							//fileLog.write("\n" + imagePath + " uploaded successfuly.");
 							writeLog(imagePath + " uploaded successfuly.");
 						} catch (DocumentException e) {
-							
-							//fileLog.write("\nUnable to upload " + imagePath);
 							writeLog("Unable to upload " + imagePath);
 							e.printStackTrace();
 						}
@@ -130,9 +141,6 @@ public class OpexModel {
 				}
 			}
 		}
-
-		//System.out.println( "Time Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate));
-		//fileLog.write("\nTime Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+".\n");
 		
 		writeLog("Time Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+".");
 	}
@@ -259,7 +267,7 @@ public class OpexModel {
 		return resolvedFilename;
 	}
 
-	private DataDefinition prepareDataDefinition(OmniService omniService, int dataDefinitionType, String fileID) {
+	public DataDefinition prepareDataDefinition(OmniService omniService, int dataDefinitionType, String fileID) {
 
 		BatchDetails batchDetails = getDataDefinitionFromDB(fileID);
 
@@ -389,11 +397,7 @@ public class OpexModel {
 		
 	}
 
-	public void setBatch(Batch batch) {
-		this.batch = batch;
-	}
-
-	public static Batch getResponseAsPOJO(Class<Batch> class1, File file) throws Exception {
+	private static Batch getResponseAsPOJO(Class<Batch> class1, File file) throws Exception {
 		return NGOHelper.getResponseAsPOJO(class1, new String(Files.readAllBytes(file.toPath())));
 	}
 

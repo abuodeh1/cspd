@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<VBox prefHeight="600.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="opex.controller.MainController">
+<VBox prefHeight="620.0" prefWidth="648.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="opex.controller.MainController">
 	<children>
 		<MenuBar>
 			<menus>
@@ -48,23 +48,23 @@
 		</MenuBar>
 		<AnchorPane>
 			<children>
-				<TabPane layoutX="12.0" layoutY="14.0" tabClosingPolicy="UNAVAILABLE">
+				<TabPane layoutX="12.0" layoutY="14.0" prefHeight="581.0" prefWidth="609.0" tabClosingPolicy="UNAVAILABLE">
 					<tabs>
-						<Tab text="Opex XML">
-							<content>
-								<fx:include fx:id="opexTab" source="OpexTab.fxml" />
-							</content>
-						</Tab> 
-						<Tab text="Logger">
-							<content>
-								<fx:include fx:id="loggerTab" source="LoggerTab.fxml" />
-							</content>
-						</Tab>
 						<Tab text="Opex Directory">
 							<content>
 								<fx:include fx:id="opexDirectoryTab" source="OpexDirectoryTab.fxml" />
 							</content>
 						</Tab>
+						<Tab text="Logger">
+							<content>
+								<fx:include fx:id="loggerTab" source="LoggerTab.fxml" />
+							</content>
+						</Tab>
+                  		<Tab text="Settings">
+                  			<content>
+								<fx:include fx:id="SettingTab" source="SettingTab.fxml" />
+							</content>
+						</Tab>						
 					</tabs>
 				</TabPane>
 			</children>

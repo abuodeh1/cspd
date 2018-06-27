@@ -9,17 +9,17 @@ import javafx.scene.control.Alert.AlertType;
 
 public class MainController {
 
-	@FXML private OpexController opexTabController;
 	@FXML private LoggerController loggerTabController;
 	@FXML private OpexDirectoryTabController opexDirectoryTabController;
+	@FXML private SettingTabController settingTabController;
 	
 	@FXML public void initialize() {
-		
-		opexTabController.injectMainController(this);
 		
 		loggerTabController.injectMainController(this);
 		
 		opexDirectoryTabController.injectMainController(this);
+		
+		//settingTabController.injectMainController(this);
 		
 	}
 	
