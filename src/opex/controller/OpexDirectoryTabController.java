@@ -134,7 +134,7 @@ public class OpexDirectoryTabController {
 							opexFolder.setStatus("Finished");
 							
 						}catch(Exception e) {
-
+							e.printStackTrace();
 							opexFolder.setStatus("Finished with Errors");
 							
 						}finally {

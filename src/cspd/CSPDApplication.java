@@ -1,5 +1,8 @@
 package cspd;
 
+import java.sql.Connection;
+
+import etech.resource.pool.PoolService;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -8,7 +11,7 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 public class CSPDApplication extends Application {
-
+	
 	public static void main(String[] args) {
 
 		launch(args);
@@ -32,7 +35,10 @@ public class CSPDApplication extends Application {
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
+
 	}
+	
+	
 
 	@Override
 	public void stop() throws Exception {

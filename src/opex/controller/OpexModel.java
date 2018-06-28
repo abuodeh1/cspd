@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,6 +16,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import cspd.BatchDetails;
+import cspd.core.ProcessLog;
 import etech.dms.exception.DocumentException;
 import etech.dms.exception.FolderException;
 import etech.omni.OmniService;
@@ -23,9 +26,6 @@ import etech.omni.core.Folder;
 import etech.omni.helper.NGOHelper;
 import etech.omni.utils.OmniDocumentUtility;
 import etech.omni.utils.OmniFolderUtility;
-import etech.resource.pool.PoolFactory;
-import etech.resource.pool.PoolService;
-import javafx.concurrent.Task;
 import opex.element.Batch;
 import opex.element.Batch.Transaction;
 import opex.element.Batch.Transaction.Group;
@@ -47,22 +47,67 @@ public class OpexModel {
 		String batchOXI = folderPath + folderPath.substring(folderPath.lastIndexOf(System.getProperty("file.separator"))) + ".oxi";
 		
 		Batch batch = readBatchOXI(batchOXI);
+		
+		int processLogID = 
+		mainController.writeDBLog(new ProcessLog(batch.getBatchIdentifier(), batch.getBaseMachine(), batch.getStartTime(), 
+				   batch.getEndInfo().getEndTime(), folder.listFiles().length, false, false, 0, 0));
+		
 		DataDefinition dataDefinition = prepareDataDefinition(omniService, 1, folder.getName());
-		if(isFolderAdded(omniService, parentFolderID, folder.getName())) {
-			writeLog("The folder (" + batchOXI + ") is already added");
-		}
+		
+		ifFolderExist(omniService, parentFolderID, folder);
+		
 		Folder addedFolder = addFolder(omniService, parentFolderID, folder.getName(), dataDefinition);
-		uploadDocumentsToOmnidocs(omniService, batch, dataDefinition, addedFolder);
+		try {
+			uploadDocumentsToOmnidocs(omniService, batch, dataDefinition, addedFolder);
+		} finally {
+			moveTransferedFolder(folder);
+		}
+		
+	}
+	
+	private void moveTransferedFolder(File folder) throws Exception {
+		
+		if( Boolean.valueOf((String)mainController.getApplicationProperties().get("omnidocs.transfer")) ){
+			
+			String dest = (String) mainController.getApplicationProperties().get("omnidocs.transferDest");
+
+			try {
+				
+				Files.move(Paths.get(folder.getPath()), Paths.get(new File(dest).getPath()), StandardCopyOption.REPLACE_EXISTING);
+				
+			} catch (IOException e) {
+				
+				mainController.writeLog("Unable to move the (" + folder.getName() + ") for the destination.");
+				
+				throw e;
+			}
+			
+		}
 		
 	}
 
+	private void ifFolderExist(OmniService omniService, String parentFolderID, File folder) throws Exception {
+		if( Boolean.valueOf((String)mainController.getApplicationProperties().get("omnidocs.deleteFolderIfExist")) ){
+			try {
+				List<Folder> folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, folder.getName(), false);
+				omniService.getFolderUtility().deleteFolder(folderRs.get(0).getFolderIndex());
+			}catch(FolderException fe) {
+				mainController.writeLog("Unable delete the (" + folder.getName() + ") from omnidocs.");
+				throw fe;
+			}
+		} else {
+			if(isFolderAdded(omniService, parentFolderID, folder.getName())) {
+				mainController.writeLog("The folder (" + folder.getName() + ") is already added");
+			}
+		}
+	}
 	private Batch readBatchOXI(String filePath) throws Exception {
 
 		Batch batch = null;
 		try {
 			batch = NGOHelper.getResponseAsPOJO(Batch.class, new String(Files.readAllBytes(new File(filePath).toPath())));
 		}catch(Exception fe) {
-			writeLog("Unable to parse " + filePath);
+			mainController.writeLog("Unable to parse " + filePath);
 			throw new Exception(fe);
 		}
 		
@@ -78,7 +123,7 @@ public class OpexModel {
 			folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, fileName, false);
 
 		}catch(Exception fe) {
-			writeLog("Unable to find " + fileName + " in omnidocs");
+			mainController.writeLog("Unable to find " + fileName + " in omnidocs");
 			throw new FolderException(fe);
 		}
 	
@@ -94,7 +139,7 @@ public class OpexModel {
 		try {
 			folder = omniService.getFolderUtility().addFolder(parentFolderID, folder);
 		}catch(Exception fe) {
-			writeLog("Unable to add " + fileName + " to omnidocs");
+			mainController.writeLog("Unable to add " + fileName + " to omnidocs");
 			throw new FolderException(fe);
 		}
 
@@ -145,10 +190,10 @@ public class OpexModel {
 						
 						try {
 							omniService.getDocumentUtility().addDocument(new File(imagePath), document);
-							writeLog(imagePath + " uploaded successfuly.");
+							mainController.writeLog(imagePath + " uploaded successfuly.");
 						} catch (DocumentException e) {
 							thereIsError = true;
-							writeLog("Unable to upload " + imagePath);
+							mainController.writeLog("Unable to upload " + imagePath);
 							e.printStackTrace();
 						}
 					}
@@ -157,26 +202,29 @@ public class OpexModel {
 			}
 		}
 		
-		writeLog("Time Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+".");
+		mainController.writeLog("Time Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+".");
 		
 		if(thereIsError) {
 			throw new DocumentException("Some Documents Failed.");
 		}
 	}
 	
-	private void writeLog(String msg) {
+/*	private void writeDBLog(String msg) {
+		
+		Connection connection = mainController.getSqlConnectionPoolService().get();
 		
 		Task task = new Task<Void>() {
 
 			@Override
 			protected Void call() throws Exception {
-				mainController.getLoggerTextArea().appendText("\n" + msg);
+				PreparedStatement preparedStatement = connection.prepareStatement("");
+				preparedStatement.executeQuery();
 				return null;
 			}
 		};
 		new Thread(task).start();
 	}
-
+*/
 	public void exportTaskWithoutSubfolder(OmniService omniService, String folderID, String folderDestination) throws Exception {
 
 		long startDate = System.currentTimeMillis();
@@ -334,12 +382,9 @@ public class OpexModel {
 	private BatchDetails getDataDefinitionFromDB(String recordPrimaryKey) {
 
 		BatchDetails batchDetails = new BatchDetails();
-		
-		String url = "jdbc:jtds:sqlserver://192.168.60.158:1433;DatabaseName=cspd";
-		  
-		PoolService<Connection> connectionPoolService = PoolFactory.newSingleConnection(url, "sa", "P@ssw0rd");
 
-		Connection connection = connectionPoolService.get();
+		Connection connection = mainController.getSqlConnectionPoolService().get();
+		
 		try {
 			PreparedStatement ps = connection.prepareStatement("SELECT * FROM BatchDetails WHERE SerialNumber = ?");
 			ps.setString(1, recordPrimaryKey);
@@ -363,13 +408,8 @@ public class OpexModel {
 
 			e.printStackTrace();
 
-		} finally {
-			try {
-				connectionPoolService.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+		} 
+		
 		System.out.println(batchDetails.toString());
 		
 		return batchDetails;

@@ -5,5 +5,6 @@
 // Generated on: 2018.06.06 at 02:32:47 PM AST 
 //
 
-@javax.xml.bind.annotation.XmlSchema(namespace = "http://etech-systems.com/Batch", elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED)
+//@javax.xml.bind.annotation.XmlSchema(namespace = "http://etech-systems.com/Batch", elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED)
+@javax.xml.bind.annotation.XmlSchema(namespace = "", elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED)
 package opex.element;

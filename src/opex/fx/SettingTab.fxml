@@ -7,17 +7,18 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane prefHeight="434.0" prefWidth="598.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="opex.controller.SettingTabController">
+<AnchorPane prefHeight="535.0" prefWidth="598.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="opex.controller.SettingTabController">
    <children>
-      <GridPane hgap="10.0" layoutX="42.0" layoutY="54.0" prefHeight="138.0" prefWidth="470.0" vgap="10.0">
+      <GridPane hgap="10.0" layoutX="42.0" layoutY="54.0" prefHeight="171.0" prefWidth="470.0" vgap="10.0">
          <columnConstraints>
-            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="109.0" minWidth="10.0" prefWidth="93.0" />
-            <ColumnConstraints hgrow="SOMETIMES" maxWidth="226.0" minWidth="10.0" prefWidth="165.0" />
-            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="226.0" minWidth="10.0" prefWidth="76.0" />
-            <ColumnConstraints hgrow="SOMETIMES" maxWidth="226.0" minWidth="10.0" prefWidth="80.0" />
+            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="114.0" minWidth="10.0" prefWidth="114.0" />
+            <ColumnConstraints hgrow="SOMETIMES" maxWidth="226.0" minWidth="10.0" prefWidth="148.0" />
+            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="226.0" minWidth="10.0" prefWidth="63.0" />
+            <ColumnConstraints hgrow="SOMETIMES" maxWidth="226.0" minWidth="10.0" prefWidth="94.0" />
          </columnConstraints>
          <rowConstraints>
             <RowConstraints maxHeight="145.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints maxHeight="185.0" minHeight="10.0" prefHeight="33.0" vgrow="SOMETIMES" />
             <RowConstraints maxHeight="185.0" minHeight="10.0" prefHeight="33.0" vgrow="SOMETIMES" />
             <RowConstraints maxHeight="185.0" minHeight="10.0" prefHeight="33.0" vgrow="SOMETIMES" />
             <RowConstraints maxHeight="185.0" minHeight="10.0" prefHeight="33.0" vgrow="SOMETIMES" />
@@ -28,28 +29,32 @@
             <TextField fx:id="omnidocsHost" prefHeight="29.0" prefWidth="200.0" GridPane.columnIndex="1" />
             <TextField fx:id="omnidocsPort" layoutX="177.0" layoutY="15.0" prefHeight="28.0" prefWidth="193.0" GridPane.columnIndex="3" />
             <Label layoutX="20.0" layoutY="23.0" text="Port" GridPane.columnIndex="2" />
-            <TextField fx:id="dbServer" layoutX="77.0" layoutY="64.0" prefHeight="28.0" prefWidth="193.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
             <Label layoutX="20.0" layoutY="70.0" text="Root Index" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-            <TextField fx:id="dbSID" layoutX="77.0" layoutY="108.0" prefHeight="28.0" prefWidth="193.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-            <Label layoutX="20.0" layoutY="114.0" text="DB Server" GridPane.rowIndex="3" />
-            <Label layoutX="71.0" layoutY="116.0" text="Port" GridPane.columnIndex="2" GridPane.rowIndex="3" />
-            <TextField fx:id="dbPort" layoutX="99.0" layoutY="110.0" prefHeight="28.0" prefWidth="193.0" GridPane.columnIndex="3" GridPane.rowIndex="3" />
+            <TextField fx:id="dbUser" layoutX="77.0" layoutY="108.0" prefHeight="28.0" prefWidth="193.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+            <Label layoutX="71.0" layoutY="116.0" text="Password" GridPane.columnIndex="2" GridPane.rowIndex="5" />
+            <TextField fx:id="dbPassword" layoutX="99.0" layoutY="110.0" prefHeight="28.0" prefWidth="193.0" GridPane.columnIndex="3" GridPane.rowIndex="5" />
             <TextField fx:id="rootIndex" layoutX="342.0" layoutY="41.0" prefHeight="28.0" prefWidth="193.0" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-            <Label layoutX="310.0" layoutY="45.0" text="SID" GridPane.rowIndex="4" />
+            <Label layoutX="310.0" layoutY="45.0" text="DB User" GridPane.rowIndex="5" />
             <Label layoutX="71.0" layoutY="110.0" text="Cabinet Name" GridPane.rowIndex="1" />
             <TextField fx:id="cabinet" layoutX="342.0" layoutY="31.0" prefHeight="28.0" prefWidth="193.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
             <TextField fx:id="omniUser" layoutX="111.0" layoutY="31.0" prefHeight="28.0" prefWidth="193.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
             <Label layoutX="25.0" layoutY="35.0" text="Omnidocs User" GridPane.rowIndex="2" />
             <TextField fx:id="omniUserPassword" layoutX="125.0" layoutY="56.0" prefHeight="28.0" prefWidth="193.0" GridPane.columnIndex="3" GridPane.rowIndex="2" />
             <Label layoutX="34.0" layoutY="60.0" text="Password" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+            <Label layoutX="329.0" layoutY="86.0" text="Delete folder if exist" GridPane.rowIndex="3" />
+            <CheckBox fx:id="deleteFolderIfExist" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="3" />
          </children>
          <padding>
             <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
          </padding>
       </GridPane>
-      <Label fx:id="omnidocsConnectionLabel" layoutX="132.0" layoutY="187.0" prefHeight="17.0" prefWidth="318.0" />
-      <Button fx:id="testConnection" layoutX="281.0" layoutY="248.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="104.0" text="Test Connection" />
-      <Button fx:id="saveBtn" layoutX="213.0" layoutY="249.0" mnemonicParsing="false" onAction="#handleSaveSettings" text="Save" />
+      <Button fx:id="testConnection" layoutX="281.0" layoutY="477.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="104.0" text="Test Connection" />
+      <Button fx:id="saveBtn" layoutX="213.0" layoutY="478.0" mnemonicParsing="false" onAction="#handleSaveSettings" text="Save" />
+      <CheckBox fx:id="transfer" ellipsisString="" layoutX="111.0" layoutY="325.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="221.0" text="Transfer folder when complete" />
+      <TextField fx:id="transferDest" layoutX="111.0" layoutY="356.0" prefHeight="25.0" prefWidth="318.0" />
+      <Button fx:id="destBtn" layoutX="435.0" layoutY="356.0" mnemonicParsing="false" onAction="#handleDestinationChooser" text="Destination" />
+      <TextField fx:id="dbUrl" layoutX="176.0" layoutY="232.0" prefHeight="28.0" prefWidth="327.0" />
+      <Label layoutX="132.0" layoutY="238.0" text="DB Url" />
    </children>
 
 </AnchorPane>

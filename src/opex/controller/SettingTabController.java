@@ -9,8 +9,10 @@ import java.util.Properties;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.stage.DirectoryChooser;
 
 public class SettingTabController {
 
@@ -22,12 +24,16 @@ public class SettingTabController {
 	@FXML private TextField rootIndex;
 	@FXML private TextField omniUser;
 	@FXML private TextField omniUserPassword;
-	@FXML private TextField dbServer;
-	@FXML private TextField dbSID;
-	@FXML private TextField dbPort;
+	@FXML private CheckBox deleteFolderIfExist;
+	@FXML private TextField dbUrl;
+	@FXML private TextField dbUser;
+	@FXML private TextField dbPassword;
+	@FXML private CheckBox transfer;
+	@FXML private TextField transferDest;
 	@FXML private Label omnidocsConnectionLabel;
 	@FXML private Button testConnection;
 	@FXML private Button saveBtn;
+	@FXML private Button destBtn;
 
 	private File fileProps;
 
@@ -48,16 +54,19 @@ public class SettingTabController {
 				props = new Properties();
 				props.load(in);
 				in.close();
-
+				
 				omnidocsHost.setText(props.getProperty("omnidocs.host"));
 				omnidocsPort.setText(props.getProperty("omnidocs.port"));
 				cabinet.setText(props.getProperty("omnidocs.cabinet"));
 				rootIndex.setText(props.getProperty("omnidocs.root"));
 				omniUser.setText(props.getProperty("omnidocs.omniUser"));
 				omniUserPassword.setText(props.getProperty("omnidocs.omniUserPassword"));
-				dbServer.setText(props.getProperty("db.host"));
-				dbPort.setText(props.getProperty("db.port"));
-				dbSID.setText(props.getProperty("db.sid"));
+				deleteFolderIfExist.setText(props.getProperty("omnidocs.deleteFolderIfExist"));
+				dbUrl.setText(props.getProperty("db.url"));
+				dbPassword.setText(props.getProperty("db.password"));
+				dbUser.setText(props.getProperty("db.user"));
+				transfer.setText(props.getProperty("omnidocs.transfer"));
+				transferDest.setText(props.getProperty("omnidocs.transferDest"));
 				
 			}
 		} catch (IOException e) {
@@ -75,26 +84,39 @@ public class SettingTabController {
 			in.close();
 
 			OutputStream outputStream = new FileOutputStream(fileProps);
-
+			
 			props.setProperty("omnidocs.host", omnidocsHost.getText()==null? "" : omnidocsHost.getText());
 			props.setProperty("omnidocs.port", omnidocsPort.getText()==null? "" : omnidocsPort.getText());
 			props.setProperty("omnidocs.cabinet", cabinet.getText()==null? "" : cabinet.getText());
 			props.setProperty("omnidocs.root", rootIndex.getText()==null? "" : rootIndex.getText());
 			props.setProperty("omnidocs.omniUser", omniUser.getText()==null? "" : omniUser.getText());
 			props.setProperty("omnidocs.omniUserPassword", omniUserPassword.getText()==null? "" : omniUserPassword.getText());
-			props.setProperty("db.host", dbServer.getText()==null? "" : dbServer.getText());
-			props.setProperty("db.port", dbPort.getText()==null? "" : dbPort.getText());
-			props.setProperty("db.sid", dbSID.getText()==null? "" : dbSID.getText());
-
+			props.setProperty("omnidocs.deleteFolderIfExist", String.valueOf(deleteFolderIfExist.isSelected()) );
+			props.setProperty("db.url", dbUrl.getText()==null? "" : dbUrl.getText());
+			props.setProperty("db.password", dbPassword.getText()==null? "" : dbPassword.getText());
+			props.setProperty("db.user", dbUser.getText()==null? "" : dbUser.getText());
+			props.setProperty("omnidocs.transfer", String.valueOf(transfer.isSelected()) );
+			props.setProperty("omnidocs.transferDest", transferDest.getText()==null? "" : transferDest.getText());
+			
 			props.store(outputStream, "CSPD Application Properties");
 
 			outputStream.close();
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
+	}
+	
+	
+	@FXML
+	public void handleDestinationChooser() {
+		
+		DirectoryChooser directoryChooser = new DirectoryChooser();
+		directoryChooser.setTitle("Choose Opex Batch Directory");
+		
+		File folderDest = directoryChooser.showDialog(null);
+		transferDest.setText(folderDest.getAbsolutePath());
 	}
 
 	public void injectMainController(MainController mainController) {
