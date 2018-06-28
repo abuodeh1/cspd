@@ -54,10 +54,15 @@
 							<content>
 								<fx:include fx:id="opexTab" source="OpexTab.fxml" />
 							</content>
-						</Tab>
+						</Tab> 
 						<Tab text="Logger">
 							<content>
 								<fx:include fx:id="loggerTab" source="LoggerTab.fxml" />
+							</content>
+						</Tab>
+						<Tab text="Opex Directory">
+							<content>
+								<fx:include fx:id="opexDirectoryTab" source="OpexDirectoryTab.fxml" />
 							</content>
 						</Tab>
 					</tabs>

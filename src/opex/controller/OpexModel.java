@@ -16,13 +16,13 @@ import java.util.concurrent.TimeUnit;
 import cspd.BatchDetails;
 import etech.dms.exception.DocumentException;
 import etech.dms.exception.FolderException;
-import etech.dms.util.DocumentUtility;
-import etech.dms.util.FolderUtility;
 import etech.omni.OmniService;
 import etech.omni.core.DataDefinition;
 import etech.omni.core.Document;
 import etech.omni.core.Folder;
 import etech.omni.helper.NGOHelper;
+import etech.omni.utils.OmniDocumentUtility;
+import etech.omni.utils.OmniFolderUtility;
 import etech.resource.pool.PoolFactory;
 import etech.resource.pool.PoolService;
 import javafx.concurrent.Task;
@@ -46,7 +46,7 @@ public class OpexModel {
 		
 		long startDate = System.currentTimeMillis();
 		
-		String parentFolderID = "116";
+		String parentFolderID = "242";
 		
 		// read opex xml
 
@@ -77,7 +77,7 @@ public class OpexModel {
 				folder.setFolderName(serialNumber);					
 				folder.setParentFolderIndex(parentFolderID);
 				
-				List<Folder> folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, folder.getFolderName());
+				List<Folder> folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, folder.getFolderName(), false);
 				Folder searchFolderRs = folderRs.size() > 0 ? folderRs.get(0): null;
 
 				if(searchFolderRs != null) {
@@ -88,9 +88,14 @@ public class OpexModel {
 				}
 				
 				folder.setDataDefinition(prepareDataDefinition(omniService, dataDefinitionType, serialNumber));
+				Folder addedFolder = null;
+				try {
+					addedFolder = omniService.getFolderUtility().addFolder(parentFolderID, folder);
+				}catch(FolderException fe) {
+					writeLog("Unable to add folder.");
+					throw new Exception(fe);
+				}
 				
-				Folder addedFolder = omniService.getFolderUtility().addFolder(parentFolderID, folder);
-
 				Iterator<Page> pages = group.getPage().iterator();
 				
 				while (pages.hasNext()) {
@@ -175,9 +180,9 @@ public class OpexModel {
 		try(FileWriter fileLog = new FileWriter(new File(folderDestination).getParent()+"\\export-log.txt", true)) {
 			long startDate = System.currentTimeMillis();
 	
-			FolderUtility<Folder, DataDefinition> folderUtility = omniService.getFolderUtility();
+			OmniFolderUtility folderUtility = omniService.getFolderUtility();
 			
-			DocumentUtility<Document> documentUtility = omniService.getDocumentUtility();
+			OmniDocumentUtility documentUtility = omniService.getDocumentUtility();
 	
 			folders.stream().forEach(folder -> {
 				try {
@@ -263,7 +268,7 @@ public class OpexModel {
 		switch (dataDefinitionType) {
 
 		case 1:
-			dataDefinition = omniService.getDataDefinitionUtility().getDataDefinition("passport");
+			dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("passport");
 			dataDefinition.getFields().get("Holder Name").setIndexValue(batchDetails.getName());
 			dataDefinition.getFields().get("Old Folder Number").setIndexValue(batchDetails.getFileNumber());
 			dataDefinition.getFields().get("New Folder Number").setIndexValue(batchDetails.getSerialNumber());
@@ -274,19 +279,19 @@ public class OpexModel {
 			break;
 
 		case 2:
-			dataDefinition = omniService.getDataDefinitionUtility().getDataDefinition("civil");
+			dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("civil");
 			dataDefinition.getFields().get("status").setIndexValue(batchDetails.getName());
 
 			break;
 
 		case 3:
-			dataDefinition = omniService.getDataDefinitionUtility().getDataDefinition("vital");
+			dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("vital");
 			dataDefinition.getFields().get("barcode").setIndexValue(String.valueOf(fileID));
 
 			break;
 
 		case 4:
-			dataDefinition = omniService.getDataDefinitionUtility().getDataDefinition("embassiess");
+			dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("embassiess");
 			dataDefinition.getFields().get("barcode").setIndexValue(String.valueOf(fileID));
 
 			break;
