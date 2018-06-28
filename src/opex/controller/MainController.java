@@ -1,11 +1,13 @@
 package opex.controller;
 
+import java.util.Properties;
+
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.TextArea;
 
 public class MainController {
 
@@ -13,13 +15,15 @@ public class MainController {
 	@FXML private OpexDirectoryTabController opexDirectoryTabController;
 	@FXML private SettingTabController settingTabController;
 	
+	private Properties props;
+	
 	@FXML public void initialize() {
 		
 		loggerTabController.injectMainController(this);
 		
 		opexDirectoryTabController.injectMainController(this);
 		
-		//settingTabController.injectMainController(this);
+		settingTabController.injectMainController(this);
 		
 	}
 	
@@ -29,6 +33,12 @@ public class MainController {
 		
 	}
 	
+	public Properties getApplicationProperties() {
+		
+		return settingTabController.getApplicationProperties();
+		
+	}
+		
 	@FXML
 	private void handleQuitMenuItem(ActionEvent event){
 		

@@ -62,7 +62,7 @@
 						</Tab>
                   		<Tab text="Settings">
                   			<content>
-								<fx:include fx:id="SettingTab" source="SettingTab.fxml" />
+								<fx:include fx:id="settingTab" source="SettingTab.fxml" />
 							</content>
 						</Tab>						
 					</tabs>

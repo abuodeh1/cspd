@@ -5,11 +5,11 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<VBox prefHeight="550.0" prefWidth="561.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="opex.controller.LoggerController">
+<VBox prefHeight="550.0" prefWidth="627.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="opex.controller.LoggerController">
 	<children>
-		<AnchorPane prefHeight="550.0" prefWidth="589.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+		<AnchorPane prefHeight="550.0" prefWidth="621.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
 			<children>
-				<TextArea fx:id="loggerTextArea" editable="false" layoutX="27.0" layoutY="22.0" prefHeight="478.0" prefWidth="528.0" />
+				<TextArea fx:id="loggerTextArea" editable="false" layoutX="27.0" layoutY="22.0" prefHeight="478.0" prefWidth="569.0" />
             <HBox alignment="CENTER_RIGHT" layoutX="27.0" layoutY="500.0" prefHeight="31.0" prefWidth="503.0">
                <children>
                   <Button alignment="CENTER" mnemonicParsing="false" onAction="#handleSaveLogButton" text="Save Log" />

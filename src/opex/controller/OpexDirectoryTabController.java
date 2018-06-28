@@ -4,8 +4,7 @@ import java.io.File;
 import java.io.FileFilter;
 
 import etech.omni.OmniService;
-import etech.omni.core.DataDefinition;
-import etech.omni.core.Folder;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -19,7 +18,6 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.DirectoryChooser;
-import opex.element.Batch;
 
 public class OpexDirectoryTabController {
 	
@@ -34,9 +32,8 @@ public class OpexDirectoryTabController {
 	@FXML private TableColumn<OpexFolder, String> status;
 	@FXML private Button uploadToOmnidocsButton;
 	
-	private OpexModel opexModel;
-	
 	private OmniService omniService;
+	private OpexModel opexModel;
 	
 	@FXML public void initialize() {
 		folder.setCellValueFactory(new PropertyValueFactory<>("folderID"));
@@ -67,7 +64,7 @@ public class OpexDirectoryTabController {
 
 			File file = files[index];
 	
-			data.add( new OpexFolder(file.getName(), file.listFiles().length-1, "") );
+			data.add( new OpexFolder(file.getName(), file.getAbsolutePath(), file.listFiles().length-1, "") );
 		}
 
 		opexTable.setItems(data);
@@ -78,11 +75,26 @@ public class OpexDirectoryTabController {
 		
 		try {
 			
-			omniService = new OmniService("192.168.60.148", 3333, true);
+			String host = mainController.getApplicationProperties().getProperty("omnidocs.host");
+			String port = mainController.getApplicationProperties().getProperty("omnidocs.port");
+			String rootIndex = mainController.getApplicationProperties().getProperty("omnidocs.root");
+			String cabinet = mainController.getApplicationProperties().getProperty("omnidocs.cabinet");
+			String username = mainController.getApplicationProperties().getProperty("omnidocs.omniUser");
+			String password = mainController.getApplicationProperties().getProperty("omnidocs.omniUserPassword");
 			
-			omniService.openCabinetSession("mabuodeh", "etech123", "jlgccab1", false, "S");
+			if( (host == null || host.trim().length() == 0) && 
+					(port == null || port.trim().length() == 0) && 
+						(rootIndex == null || rootIndex.trim().length() == 0) && 
+							(cabinet == null || cabinet.trim().length() == 0) && 
+								(username == null || username.trim().length() == 0) && 
+									(password == null || password.trim().length() == 0)) {
+				mainController.errorAlert("Omnidocs Settings Problem", new Exception("Please check Omnidos in setting tab."));
+				return;
+			}
 			
-			String rootFolder = "108";
+			omniService = new OmniService(host, Integer.valueOf(port), true);
+			
+			omniService.openCabinetSession(username, password, cabinet, false, "S");
 			
 			opexModel = new OpexModel(mainController);
 			
@@ -93,7 +105,8 @@ public class OpexDirectoryTabController {
 					
 					mainController.getLoggerTextArea().appendText("\nUpload Started...");
 					uploadToOmnidocsButton.setDisable(true);
-					File[] files = batchDirectory.listFiles(new FileFilter() {
+					
+					/*File[] files = batchDirectory.listFiles(new FileFilter() {
 						
 						@Override
 						public boolean accept(File file) {
@@ -108,10 +121,30 @@ public class OpexDirectoryTabController {
 					for(int index = 0; index < files.length; index++) {
 
 						try {
-							opexModel.uploadFolder(omniService, rootFolder, files[index]);
+							opexModel.uploadFolder(omniService, rootIndex, files[index]);
 						}catch(Exception e) {}
 
-					}
+					}*/
+					
+					opexTable.getItems().stream().forEach(opexFolder -> {
+						try {
+							
+							opexModel.uploadFolder(omniService, rootIndex, new File(opexFolder.getFolderPath()));
+							
+							opexFolder.setStatus("Finished");
+							
+						}catch(Exception e) {
+
+							opexFolder.setStatus("Finished with Errors");
+							
+						}finally {
+							
+							opexTable.refresh();
+						}
+						
+						
+					});
+					
 					Thread.sleep(50);
 					mainController.getLoggerTextArea().appendText("\nUpload Finished...");
 
@@ -131,8 +164,6 @@ public class OpexDirectoryTabController {
 
 			task.setOnCancelled(e -> uploadToOmnidocsButton.setDisable(false));
 
-			
-			
 			//opexModel.exportTaskWithSubfolder(omniService, "108", "D:\\temp1");
 		    
 		} catch (Exception e) {
@@ -140,6 +171,7 @@ public class OpexDirectoryTabController {
 			mainController.errorAlert("Error Communication ...", e);
 			
 			e.printStackTrace();
+			
 		}
 	}
 	
@@ -158,11 +190,14 @@ public class OpexDirectoryTabController {
 	public class OpexFolder {
 
 		private SimpleStringProperty folderID;
+		private String folderPath;
 		private SimpleIntegerProperty numberOfDocument;
 		private SimpleStringProperty status;
+		private SimpleBooleanProperty withErrors = new SimpleBooleanProperty(false);
 		
-		public OpexFolder(String folderID, int numberOfDocument, String status) {
+		public OpexFolder(String folderID, String folderPath, int numberOfDocument, String status) {
 			this.folderID = new SimpleStringProperty(folderID);
+			this.folderPath = folderPath;
 			this.numberOfDocument = new SimpleIntegerProperty(numberOfDocument);
 			this.status = new SimpleStringProperty(status);
 		}
@@ -191,6 +226,22 @@ public class OpexDirectoryTabController {
 			this.status.set(status);
 		}
 
+		public String getFolderPath() {
+			return folderPath;
+		}
+
+		public void setFolderPath(String folderPath) {
+			this.folderPath = folderPath;
+		}
+
+		public boolean isWithErrors() {
+			return withErrors.get();
+		}
+
+		public void setWithErrors(boolean withErrors) {
+			this.withErrors.set(withErrors);
+		}
+		
 	}
 
 	public void injectMainController(MainController mainController) {

@@ -10,3 +10,5 @@ _project.xml
 log.txt
 inputxml.txt
 *.class
+/build/
+build/

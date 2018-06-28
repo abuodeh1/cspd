@@ -72,8 +72,16 @@ public class OpexModel {
 	
 	private boolean isFolderAdded(OmniService omniService, String parentFolderID, String fileName) throws FolderException {
 		
-		List<Folder> folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, fileName, false);
+		List<Folder> folderRs = null;
+		
+		try{
+			folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, fileName, false);
 
+		}catch(Exception fe) {
+			writeLog("Unable to find " + fileName + " in omnidocs");
+			throw new FolderException(fe);
+		}
+	
 		return folderRs.size() > 0;
 	}
 	
@@ -83,13 +91,19 @@ public class OpexModel {
 		folder.setFolderName(fileName);					
 		folder.setParentFolderIndex(parentFolderID);
 		folder.setDataDefinition(dataDefinition);
-		
-		folder = omniService.getFolderUtility().addFolder(parentFolderID, folder);
+		try {
+			folder = omniService.getFolderUtility().addFolder(parentFolderID, folder);
+		}catch(Exception fe) {
+			writeLog("Unable to add " + fileName + " to omnidocs");
+			throw new FolderException(fe);
+		}
 
 		return folder;
 	}
 
-	private void uploadDocumentsToOmnidocs(OmniService omniService, Batch batch, DataDefinition dataDefinition, Folder folder) throws Exception {
+	private void uploadDocumentsToOmnidocs(OmniService omniService, Batch batch, DataDefinition dataDefinition, Folder folder) throws DocumentException {
+		
+		boolean thereIsError = false;
 		
 		long startDate = System.currentTimeMillis();
 		
@@ -133,6 +147,7 @@ public class OpexModel {
 							omniService.getDocumentUtility().addDocument(new File(imagePath), document);
 							writeLog(imagePath + " uploaded successfuly.");
 						} catch (DocumentException e) {
+							thereIsError = true;
 							writeLog("Unable to upload " + imagePath);
 							e.printStackTrace();
 						}
@@ -143,6 +158,10 @@ public class OpexModel {
 		}
 		
 		writeLog("Time Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+".");
+		
+		if(thereIsError) {
+			throw new DocumentException("Some Documents Failed.");
+		}
 	}
 	
 	private void writeLog(String msg) {

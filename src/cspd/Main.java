@@ -1,5 +1,12 @@
 package cspd;
 	
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Properties;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -27,6 +34,39 @@ public class Main extends Application {
 	}
 	
 	public static void main(String[] args) {
-		launch(args);
+		//launch(args);
+		
+		/*Properties props = new Properties();
+		props.setProperty("omnidocs.host", "192.168.60.148");
+		props.setProperty("omnidocs.port", "3333");
+		props.setProperty("db.host", "192.168.60.93");
+		props.setProperty("db.port", "1526");
+		props.setProperty("db.sid", "etech11g");*/
+		
+		
+		OutputStream outputStream = null;
+		try {
+
+			FileInputStream in = new FileInputStream("application.properties");
+			Properties props = new Properties();
+			props.load(in);
+			in.close();
+			
+			File file = new File("application.properties");
+			outputStream = new FileOutputStream(file);
+//			props.store(outputStream, "CSPD Application Properties");
+//			System.out.println("db.port " + props.get("db.port"));
+//			
+			props.setProperty("db.port", "4444");
+			props.store(outputStream, null);
+			System.out.println("db.port " + props.get("db.port"));
+			
+			outputStream.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
 	}
 }
