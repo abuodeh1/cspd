@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
@@ -13,15 +12,22 @@ import cspd.core.GeneralLog;
 import cspd.core.Log;
 import cspd.core.ProcessDetailsLog;
 import cspd.core.ProcessLog;
-import etech.resource.pool.PoolFactory;
 import etech.resource.pool.PoolService;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 public class MainController {
 
@@ -45,7 +51,7 @@ public class MainController {
 		String user = getApplicationProperties().getProperty("db.user");
 		String password = getApplicationProperties().getProperty("db.password");
 				
-		sqlConnectionPoolService = PoolFactory.newSingleConnection(url, user, password);
+		//sqlConnectionPoolService = PoolFactory.newSingleConnection(url, user, password);
 		
 	}
 
@@ -76,6 +82,31 @@ public class MainController {
 		
 		System.exit(0);
 		
+	}
+	
+	@FXML
+	private void handleAboutMenuItem(ActionEvent event){
+		
+		Image image = new Image(getClass().getResourceAsStream("../fx/icon.jpg"), 70, 70, true, true);
+		Label label = new Label("Civil Status and Passport Department", new ImageView(image));
+		
+		HBox hBox = new HBox();
+		hBox.setAlignment(Pos.CENTER);
+		hBox.getChildren().add(label);
+		
+		Stage aboutStage = new Stage();
+		
+		Scene sence = new Scene(hBox);
+		
+		aboutStage.setScene(sence);
+		aboutStage.setHeight(200);
+		aboutStage.setWidth(400);
+		
+		aboutStage.initModality(Modality.APPLICATION_MODAL);
+		aboutStage.setTitle("About Me");
+		aboutStage.setIconified(false);
+		
+		aboutStage.showAndWait();
 	}
 	
 	public void msgAlert(String headerText) {

@@ -41,7 +41,7 @@
 				</Menu>
 				<Menu mnemonicParsing="false" text="Help">
 					<items>
-						<MenuItem mnemonicParsing="false" text="About Etech@DMS Utility" />
+						<MenuItem mnemonicParsing="false" onAction="#handleAboutMenuItem" text="About Etech@DMS Utility" />
 					</items>
 				</Menu>
 			</menus>
