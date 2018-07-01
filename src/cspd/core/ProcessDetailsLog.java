@@ -9,16 +9,13 @@ public class ProcessDetailsLog implements Log {
 	private int timeUploadedToOmniDocs; 
 	private int timeUploadedToDocuware;
 
-	public ProcessDetailsLog(int logID, String documentName, boolean isUploadedToOmniDocs, boolean isUploadedToDocuware, int timeUploadedToOmniDocs,
-			int timeUploadedToDocuware) {
+	public ProcessDetailsLog(int logID, String documentName, boolean isUploadedToOmniDocs) {
 
 		this.logID = logID;
 		this.documentName = documentName;
 		this.isUploadedToOmniDocs = isUploadedToOmniDocs;
-		this.isUploadedToDocuware = isUploadedToDocuware;
-		this.timeUploadedToOmniDocs = timeUploadedToOmniDocs;
-		this.timeUploadedToDocuware = timeUploadedToDocuware;
 	}
+	
 	public int getLogID() {
 		return logID;
 	}

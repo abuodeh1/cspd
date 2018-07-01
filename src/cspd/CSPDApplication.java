@@ -1,8 +1,5 @@
 package cspd;
 
-import java.sql.Connection;
-
-import etech.resource.pool.PoolService;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;

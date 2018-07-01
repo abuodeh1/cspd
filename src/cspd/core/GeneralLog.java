@@ -4,29 +4,29 @@ import java.sql.Timestamp;
 
 public class GeneralLog implements Log {
 
-	private String logID;
-	private String logPriority;
+	private int logID;
+	private int logPriority;
 	private String logSeverity;
 	private String logMessage;
 	private Timestamp logTime;
 	
-	public GeneralLog(String logID, String logPriority, String logSeverity, String logMessage) {
+	public GeneralLog(int logID, int logPriority, String logSeverity, String logMessage) {
 		super();
 		this.logID = logID;
 		this.logPriority = logPriority;
 		this.logSeverity = logSeverity;
 		this.logMessage = logMessage;
 	}
-	public String getLogID() {
+	public int getLogID() {
 		return logID;
 	}
-	public void setLogID(String logID) {
+	public void setLogID(int logID) {
 		this.logID = logID;
 	}
-	public String getLogPriority() {
+	public int getLogPriority() {
 		return logPriority;
 	}
-	public void setLogPriority(String logPriority) {
+	public void setLogPriority(int logPriority) {
 		this.logPriority = logPriority;
 	}
 	public String getLogSeverity() {

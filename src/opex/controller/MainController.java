@@ -12,6 +12,7 @@ import cspd.core.GeneralLog;
 import cspd.core.Log;
 import cspd.core.ProcessDetailsLog;
 import cspd.core.ProcessLog;
+import etech.resource.pool.PoolFactory;
 import etech.resource.pool.PoolService;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -51,7 +52,7 @@ public class MainController {
 		String user = getApplicationProperties().getProperty("db.user");
 		String password = getApplicationProperties().getProperty("db.password");
 				
-		//sqlConnectionPoolService = PoolFactory.newSingleConnection(url, user, password);
+		sqlConnectionPoolService = PoolFactory.newSingleConnection(url, user, password);
 		
 	}
 
@@ -152,29 +153,35 @@ public class MainController {
 		
 		if(log instanceof GeneralLog) {
 			
-			try {
-					ProcessLog processLog = (ProcessLog) log;
+			Task task = new Task<Void>() {
+
+				@Override
+				protected Void call() throws Exception {
 					
-					String sql = "INSERT INTO ProcessLog(BatchIdentifier, MachineName, StartTime, EndTime, NumberOfDocuments) "
-							   + "VALUES ( ?, ?, ?, ?, ?)";
+					try {
+						GeneralLog generalLog = (GeneralLog) log;
+						
+						String sql = "INSERT INTO GeneralLog(LogID, LogPriority, LogSeverity, LogMessage) "
+								   + "VALUES ( ?, ?, ?, ?)";
+						
+						PreparedStatement preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setInt(1, generalLog.getLogID());
+						preparedStatement.setInt(2, generalLog.getLogPriority());
+						preparedStatement.setString(3, generalLog.getLogSeverity());
+						preparedStatement.setString(4, generalLog.getLogMessage());
+						
+						preparedStatement.execute();
+						
+					}catch(Exception sqle) {
+						sqle.printStackTrace();
+					}
 					
-					PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-					preparedStatement.setString(1, processLog.getBatchIdentifier());
-					preparedStatement.setString(2, processLog.getMachineName());
-					preparedStatement.setTimestamp(3, processLog.getStartTime());
-					preparedStatement.setTimestamp(4, processLog.getEndTime());
-					preparedStatement.setInt(5, processLog.getNumberOfDocuments());
-/*					preparedStatement.setBoolean(6, processLog.isUploadedToOmniDocs());
-					preparedStatement.setInt(7, processLog.getTimeUploadedToOmniDocs());
-					preparedStatement.setBoolean(8, processLog.isUploadedToDocuware());
-					preparedStatement.setInt(9, processLog.getTimeUploadedToDocuware());
-*/
-					ResultSet rs = preparedStatement.executeQuery();
-					if(rs.next()) logID = rs.getInt(1);
+					return null;
 					
-			}catch(SQLException sqle) {
-				sqle.printStackTrace();
-			}
+				}
+			};
+			new Thread(task).start();
+			
 		}else
 		
 		if(log instanceof ProcessLog) {
@@ -185,24 +192,19 @@ public class MainController {
 					
 					int id = 0;
 					try {
-					ProcessLog processLog = (ProcessLog) log;
-					String sql = "INSERT INTO ProcessLog( BatchIdentifier, MachineName, StartTime, EndTime, NumberOfDocuments) "
-							   + "VALUES (?, ?, ?, ?, ?)";
-					PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-					//preparedStatement.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
-					preparedStatement.setString(1, processLog.getBatchIdentifier());
-					preparedStatement.setString(2, processLog.getMachineName());
-					preparedStatement.setTimestamp(3, processLog.getStartTime());
-					preparedStatement.setTimestamp(4, processLog.getEndTime());
-					preparedStatement.setInt(5, processLog.getNumberOfDocuments());
-					/*preparedStatement.setBoolean(6, processLog.isUploadedToOmniDocs());
-					preparedStatement.setInt(7, processLog.getTimeUploadedToOmniDocs());
-					preparedStatement.setBoolean(8, processLog.isUploadedToDocuware());
-					preparedStatement.setInt(9, processLog.getTimeUploadedToDocuware());*/
-
-					ResultSet rs = preparedStatement.executeQuery();
-					if(rs.next())
-						id = rs.getInt(1);
+						ProcessLog processLog = (ProcessLog) log;
+						String sql = "INSERT INTO ProcessLog( BatchIdentifier, MachineName, StartTime, EndTime, NumberOfDocuments) "
+								   + "VALUES (?, ?, ?, ?, ?)";
+						PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+						preparedStatement.setString(1, processLog.getBatchIdentifier());
+						preparedStatement.setString(2, processLog.getMachineName());
+						preparedStatement.setTimestamp(3, processLog.getStartTime());
+						preparedStatement.setTimestamp(4, processLog.getEndTime());
+						preparedStatement.setInt(5, processLog.getNumberOfDocuments());
+	
+						ResultSet rs = preparedStatement.executeQuery();
+						if(rs.next())
+							id = rs.getInt(1);
 					}catch(Exception e){e.printStackTrace();}
 					return id;
 				}
@@ -217,31 +219,30 @@ public class MainController {
 		}else
 		
 		if(log instanceof ProcessDetailsLog) {
-			Task task = new Task<Integer>() {
+			Task task = new Task<Void>() {
 
 				@Override
-				protected Integer call() throws Exception {
-					
-					ProcessDetailsLog processDetailsLog = (ProcessDetailsLog) log;
-					String sql = "INSERT INTO ProcessLogDetails(LogId, DocumentName, UploadedToOmniDocs)  "
-							   + "VALUES (?, ?, ?)";
-					PreparedStatement preparedStatement = connection.prepareStatement(sql);
-					preparedStatement.setInt(1, processDetailsLog.getLogID());
-					preparedStatement.setString(2, processDetailsLog.getDocumentName());
-					preparedStatement.setBoolean(3, processDetailsLog.isUploadedToOmniDocs());
-					
-					preparedStatement.executeQuery();
-					
-					return processDetailsLog.getLogID();
+				protected Void call() throws Exception {
+					try {
+						ProcessDetailsLog processDetailsLog = (ProcessDetailsLog) log;
+						String sql = "INSERT INTO ProcessLogDetails(LogId, DocumentName, UploadedToOmniDocs)  "
+								   + "VALUES (?, ?, ?)";
+						PreparedStatement preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setInt(1, processDetailsLog.getLogID());
+						preparedStatement.setString(2, processDetailsLog.getDocumentName());
+						preparedStatement.setBoolean(3, processDetailsLog.isUploadedToOmniDocs());
+						
+						preparedStatement.execute();
+						
+					}catch(SQLException sqle) {
+						sqle.printStackTrace();
+					}
+				
+					return null;
 				}
 			};
 			new Thread(task).start();
-			try {
-				logID = (Integer)task.get();
-			} catch (InterruptedException | ExecutionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			
 		}
 
 		return logID;

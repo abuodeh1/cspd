@@ -16,7 +16,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import cspd.BatchDetails;
+import cspd.core.GeneralLog;
+import cspd.core.ProcessDetailsLog;
 import cspd.core.ProcessLog;
+import etech.dms.exception.DataDefinitionException;
 import etech.dms.exception.DocumentException;
 import etech.dms.exception.FolderException;
 import etech.omni.OmniService;
@@ -36,27 +39,22 @@ public class OpexModel {
 
 	private MainController mainController;
 	
+	int processLogID = -1;
+	
 	public OpexModel(MainController mainController) {
 		this.mainController = mainController;
 	}
 	
 	public void uploadFolder(OmniService omniService, String parentFolderID, File folder) throws Exception {
-		
-		String folderPath = folder.getAbsolutePath();
-		
-		String batchOXI = folderPath + folderPath.substring(folderPath.lastIndexOf(System.getProperty("file.separator"))) + ".oxi";
-		
-		Batch batch = readBatchOXI(batchOXI);
-		
-		int processLogID = 
-		mainController.writeDBLog(new ProcessLog(batch.getBatchIdentifier(), batch.getBaseMachine(), batch.getStartTime(), 
-				   batch.getEndInfo().getEndTime(), folder.listFiles().length, false, false, 0, 0));
+			
+		Batch batch = readBatchOXI(folder);
 		
 		DataDefinition dataDefinition = prepareDataDefinition(omniService, 1, folder.getName());
 		
-		ifFolderExist(omniService, parentFolderID, folder);
+		folderExistProcess(omniService, parentFolderID, folder);
 		
-		Folder addedFolder = addFolder(omniService, parentFolderID, folder.getName(), dataDefinition);
+		Folder addedFolder = addFolderProcess(omniService, parentFolderID, folder, dataDefinition);
+
 		try {
 			uploadDocumentsToOmnidocs(omniService, batch, dataDefinition, addedFolder);
 		} finally {
@@ -75,9 +73,13 @@ public class OpexModel {
 				
 				Files.move(Paths.get(folder.getPath()), Paths.get(new File(dest).getPath()), StandardCopyOption.REPLACE_EXISTING);
 				
+				mainController.writeDBLog(new GeneralLog(processLogID, 4, "INFO", "FOLDER NAMED " + folder.getName() + " IS MOVED SUCCESSFULY"));
+				
 			} catch (IOException e) {
 				
 				mainController.writeLog("Unable to move the (" + folder.getName() + ") for the destination.");
+				
+				mainController.writeDBLog(new GeneralLog(processLogID, 4, "INFO", "UNABLE TO MOVE FOLDER NAMED " + folder.getName()));
 				
 				throw e;
 			}
@@ -86,28 +88,52 @@ public class OpexModel {
 		
 	}
 
-	private void ifFolderExist(OmniService omniService, String parentFolderID, File folder) throws Exception {
+	private void folderExistProcess(OmniService omniService, String parentFolderID, File folder) throws FolderException {
+		
+		List<Folder> folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, folder.getName(), false);
+		
+		boolean isFound = (folderRs.size() > 0);
+		
 		if( Boolean.valueOf((String)mainController.getApplicationProperties().get("omnidocs.deleteFolderIfExist")) ){
-			try {
-				List<Folder> folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, folder.getName(), false);
-				omniService.getFolderUtility().deleteFolder(folderRs.get(0).getFolderIndex());
-			}catch(FolderException fe) {
-				mainController.writeLog("Unable delete the (" + folder.getName() + ") from omnidocs.");
-				throw fe;
+			if(isFound) {
+				mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "DOES FOLDER NAMED " + folder.getName() + " FOUND? " + isFound));
+				try {
+						omniService.getFolderUtility().deleteFolder(folderRs.get(0).getFolderIndex());
+						mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "FOLDER NAMED " + folder.getName() + " IS DELETED SUCCESSFULY"));
+				}catch(FolderException fe) {
+					mainController.writeLog("Unable delete the (" + folder.getName() + ") from omnidocs.");
+					mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "UNABLE TO DELETE FOLDER NAMED " + folder.getName()));
+					throw new FolderException("Unable delete the (" + folder.getName() + ") from omnidocs.");
+				}
 			}
 		} else {
-			if(isFolderAdded(omniService, parentFolderID, folder.getName())) {
-				mainController.writeLog("The folder (" + folder.getName() + ") is already added");
-			}
+			
+			mainController.writeDBLog(new GeneralLog(processLogID, 2, "ERROR", "UNABLE TO CONTINUE WITH FOLDER ALREADY EXISTS"));
+			
+			throw new FolderException("Unable to continue with folder already exists");
+
 		}
 	}
-	private Batch readBatchOXI(String filePath) throws Exception {
+	private Batch readBatchOXI(File folder) throws Exception {
 
+		String folderPath = folder.getAbsolutePath();
+		
+		String batchOXI = folderPath + folderPath.substring(folderPath.lastIndexOf(System.getProperty("file.separator"))) + ".oxi";
+		
+		
 		Batch batch = null;
 		try {
-			batch = NGOHelper.getResponseAsPOJO(Batch.class, new String(Files.readAllBytes(new File(filePath).toPath())));
+			batch = NGOHelper.getResponseAsPOJO(Batch.class, new String(Files.readAllBytes(new File(batchOXI).toPath())));
+			
+			processLogID = 
+					mainController.writeDBLog(new ProcessLog(batch.getBatchIdentifier(), batch.getBaseMachine(), batch.getStartTime(), 
+							   batch.getEndInfo().getEndTime(), folder.listFiles().length, false, false, 0, 0));
+			
+			mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "OXI FILE PARSED SUCCESSFULY WITH " + batchOXI));
+			
 		}catch(Exception fe) {
-			mainController.writeLog("Unable to parse " + filePath);
+			mainController.writeLog("Unable to parse " + batchOXI);
+			mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "UNABLE TO PARSE OXI FILE " + batchOXI));
 			throw new Exception(fe);
 		}
 		
@@ -115,37 +141,29 @@ public class OpexModel {
 		
 	}
 	
-	private boolean isFolderAdded(OmniService omniService, String parentFolderID, String fileName) throws FolderException {
+	private Folder addFolderProcess(OmniService omniService, String parentFolderID, File folder, DataDefinition dataDefinition) throws FolderException {
 		
-		List<Folder> folderRs = null;
+		Folder addedFolder = null;
 		
 		try{
-			folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, fileName, false);
+			
+			Folder preparedFolder = new Folder();
+			preparedFolder.setFolderName(folder.getName());					
+			preparedFolder.setParentFolderIndex(parentFolderID);
+			preparedFolder.setDataDefinition(dataDefinition);
+			
+			addedFolder = omniService.getFolderUtility().addFolder(parentFolderID, preparedFolder);
+			mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "FOLDER NAMED IS ADDED SUCCESSFULY"));
 
 		}catch(Exception fe) {
-			mainController.writeLog("Unable to find " + fileName + " in omnidocs");
+			mainController.writeLog("Unable to find " + folder.getName() + " in omnidocs");
+			mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "UNABLE TO ADD FOLDER NAMED " + folder.getName()));
 			throw new FolderException(fe);
 		}
 	
-		return folderRs.size() > 0;
+		return addedFolder;
 	}
 	
-	private Folder addFolder(OmniService omniService, String parentFolderID, String fileName, DataDefinition dataDefinition) throws FolderException {
-		
-		Folder folder = new Folder();
-		folder.setFolderName(fileName);					
-		folder.setParentFolderIndex(parentFolderID);
-		folder.setDataDefinition(dataDefinition);
-		try {
-			folder = omniService.getFolderUtility().addFolder(parentFolderID, folder);
-		}catch(Exception fe) {
-			mainController.writeLog("Unable to add " + fileName + " to omnidocs");
-			throw new FolderException(fe);
-		}
-
-		return folder;
-	}
-
 	private void uploadDocumentsToOmnidocs(OmniService omniService, Batch batch, DataDefinition dataDefinition, Folder folder) throws DocumentException {
 		
 		boolean thereIsError = false;
@@ -191,9 +209,17 @@ public class OpexModel {
 						try {
 							omniService.getDocumentUtility().addDocument(new File(imagePath), document);
 							mainController.writeLog(imagePath + " uploaded successfuly.");
+							
+							mainController.writeDBLog(new ProcessDetailsLog(processLogID, document.getDocumentName(), true));
+					
+							mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "DOCUMENT ADDED SUCCESSFULLY WITH " + imagePath));
+							
 						} catch (DocumentException e) {
 							thereIsError = true;
 							mainController.writeLog("Unable to upload " + imagePath);
+							mainController.writeDBLog(new ProcessDetailsLog(processLogID, document.getDocumentName(), false));
+							
+							mainController.writeDBLog(new GeneralLog(processLogID, 2, "ERROR", "UNABLE TOT ADD DOCUMENT " + imagePath));
 							e.printStackTrace();
 						}
 					}
@@ -340,40 +366,51 @@ public class OpexModel {
 
 		DataDefinition dataDefinition = null;
 
-		switch (dataDefinitionType) {
-
-		case 1:
-			dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("passport");
-			dataDefinition.getFields().get("Holder Name").setIndexValue(batchDetails.getName());
-			dataDefinition.getFields().get("Old Folder Number").setIndexValue(batchDetails.getFileNumber());
-			dataDefinition.getFields().get("New Folder Number").setIndexValue(batchDetails.getSerialNumber());
-			dataDefinition.getFields().get("Office Name").setIndexValue(batchDetails.getSerialNumber().substring(batchDetails.getSerialNumber().lastIndexOf('/') + 1));
-			dataDefinition.getFields().get("Document Type").setIndexValue(batchDetails.getSerialNumber().substring(batchDetails.getSerialNumber().indexOf('/') + 1, batchDetails.getSerialNumber().lastIndexOf('/')));
-			dataDefinition.getFields().get("Year").setIndexValue(batchDetails.getYear());
-
-			break;
-
-		case 2:
-			dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("civil");
-			dataDefinition.getFields().get("status").setIndexValue(batchDetails.getName());
-
-			break;
-
-		case 3:
-			dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("vital");
-			dataDefinition.getFields().get("barcode").setIndexValue(String.valueOf(fileID));
-
-			break;
-
-		case 4:
-			dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("embassiess");
-			dataDefinition.getFields().get("barcode").setIndexValue(String.valueOf(fileID));
-
-			break;
-
-		default:
-
+		try {
+			switch (dataDefinitionType) {
+	
+			case 1:
+				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("passport");
+				dataDefinition.getFields().get("Holder Name").setIndexValue(batchDetails.getName());
+				dataDefinition.getFields().get("Old Folder Number").setIndexValue(batchDetails.getFileNumber());
+				dataDefinition.getFields().get("New Folder Number").setIndexValue(batchDetails.getSerialNumber());
+				//dataDefinition.getFields().get("Office Name").setIndexValue(batchDetails.getSerialNumber().substring(batchDetails.getSerialNumber().lastIndexOf('_') + 1));
+				//dataDefinition.getFields().get("Document Type").setIndexValue(batchDetails.getSerialNumber().substring(batchDetails.getSerialNumber().indexOf('_') + 1, batchDetails.getSerialNumber().lastIndexOf('_')));
+				dataDefinition.getFields().get("Year").setIndexValue(batchDetails.getYear());
+	
+				break;
+	
+			case 2:
+				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("civil");
+				dataDefinition.getFields().get("status").setIndexValue(batchDetails.getName());
+	
+				break;
+	
+			case 3:
+				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("vital");
+				dataDefinition.getFields().get("barcode").setIndexValue(String.valueOf(fileID));
+	
+				break;
+	
+			case 4:
+				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("embassiess");
+				dataDefinition.getFields().get("barcode").setIndexValue(String.valueOf(fileID));
+	
+				break;
+	
+			default:
+	
+			}
+			
+			mainController.writeDBLog(new GeneralLog(processLogID, 3, "INFO", "DATADEFINITION TYPE " + dataDefinitionType + " PREPARED SUCCESSFULY"));
+			
+		}catch(DataDefinitionException dfe) {
+			
+			mainController.writeDBLog(new GeneralLog(processLogID, 3, "ERROR", "UNABLE TO PREPARE DATADEFINITION TYPE " + dataDefinitionType));
+			
+			dfe.printStackTrace();
 		}
+		
 
 		return dataDefinition;
 
@@ -404,8 +441,11 @@ public class OpexModel {
 				batchDetails.setYear(rs.getString("Year"));
 			}
 
+			mainController.writeDBLog(new GeneralLog(processLogID, 3, "INFO", "DATADEFINITION FETCHED UP FROM DATABASE SUCCESSFULY"));
+			
 		} catch (SQLException e) {
 
+			mainController.writeDBLog(new GeneralLog(processLogID, 3, "ERROR", "UNABLE TO FETCHED UP DATADEFINITION FROM DATABASE"));
 			e.printStackTrace();
 
 		} 
