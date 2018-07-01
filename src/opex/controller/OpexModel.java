@@ -62,25 +62,25 @@ public class OpexModel {
 		try {
 			uploadDocumentsToOmnidocs(omniService, batch, addedFolder.getFolderIndex(), folder);
 		} finally {
-			moveTransferedFolder(folder);
+			moveUploadedFolder(folder);
 		}
 		
 	}
 	
-	private void moveTransferedFolder(File folder) throws Exception {
+	private void moveUploadedFolder(File folder) throws Exception {
 		
 		if( Boolean.valueOf((String)mainController.getApplicationProperties().get("omnidocs.transfer")) ){
 			
 			String dest = (String) mainController.getApplicationProperties().get("omnidocs.transferDest");
 
 			try {
-				File fileDest = new File(dest  + System.getProperty("file.separator")+ folder.getName());
+				File fileDest = new File(dest + System.getProperty("file.separator") + folder.getName());
 				if(!fileDest.exists()) 
 					fileDest.mkdirs();
 				
 				//Files.move(Paths.get(folder.getPath()), Paths.get(file.getPath()), StandardCopyOption.REPLACE_EXISTING);
 				
-				Files.walkFileTree(fileDest.toPath(), new SimpleFileVisitor<Path>() {
+				/*Files.walkFileTree(fileDest.toPath(), new SimpleFileVisitor<Path>() {
 					
 					public Path fromPath;
 				    public Path toPath;
@@ -97,11 +97,13 @@ public class OpexModel {
 
 				    @Override
 				    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-				        Files.move(file, toPath.resolve(fromPath.relativize(file)), copyOption);
+				        Files.copy(file, toPath.resolve(fromPath.relativize(file)), copyOption);
 				        return FileVisitResult.CONTINUE;
 				    }
 				    				    
 				});
+				*/
+				move(folder, fileDest);
 				
 				mainController.writeLog("Folder (" + folder.getName() + ") moved to the destination.");
 				
@@ -120,6 +122,22 @@ public class OpexModel {
 		
 	}
 
+	private boolean move(File sourceFile, File destFile) {
+	    if (sourceFile.isDirectory()) {
+	        for (File file : sourceFile.listFiles()) {
+	            move(file, new File(destFile.getPath() + System.getProperty("file.separator") + file.getName()));
+	        }
+	    } else {
+	        try {
+	            Files.move(Paths.get(sourceFile.getPath()), Paths.get(destFile.getPath()), StandardCopyOption.REPLACE_EXISTING);
+	            return true;
+	        } catch (IOException e) {
+	            return false;
+	        }
+	    }
+	    return false;
+	}
+	
 	class MoveDirectory extends SimpleFileVisitor<Path> {
 		
 		public Path fromPath;

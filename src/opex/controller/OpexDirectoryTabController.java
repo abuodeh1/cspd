@@ -107,16 +107,19 @@ public class OpexDirectoryTabController {
 					
 					opexTable.getItems().stream().forEach(opexFolder -> {
 						try {
-							mainController.getLoggerTextArea().appendText("\nStart Upload Process For ( " + opexFolder.getFolderID() + " )");
+							mainController.writeLog("\nStart Upload Process For ( " + opexFolder.getFolderID() + " )");
 							
 							opexModel.uploadFolder(omniService, rootIndex, new File(opexFolder.getFolderPath()));
 							
-							mainController.getLoggerTextArea().appendText("Finish Process For ( " + opexFolder.getFolderID() + " )\n\n" );
+							mainController.writeLog("Finish Process For ( " + opexFolder.getFolderID() + " )\n" );
 							
-							opexFolder.setStatus("\nFinish Process." );
+							opexFolder.setStatus("Finish Process." );
 							
 						}catch(Exception e) {
 							e.printStackTrace();
+							
+							mainController.writeLog("Finish Process With Errors");
+							
 							opexFolder.setStatus("Finished with Errors");
 							
 						}finally {
@@ -128,7 +131,7 @@ public class OpexDirectoryTabController {
 					});
 					
 					Thread.sleep(50);
-					mainController.getLoggerTextArea().appendText("\nUpload Finished...");
+					mainController.writeLog("\nUpload Complete...");
 
 					return null;
 				}
