@@ -103,35 +103,17 @@ public class OpexDirectoryTabController {
 				@Override
 				protected Void call() throws Exception {
 					
-					mainController.getLoggerTextArea().appendText("\nUpload Started...");
 					uploadToOmnidocsButton.setDisable(true);
-					
-					/*File[] files = batchDirectory.listFiles(new FileFilter() {
-						
-						@Override
-						public boolean accept(File file) {
-						    if (file.isDirectory()) {
-						      return true;
-						    }
-						    
-						    return false;
-						}
-					});
-					
-					for(int index = 0; index < files.length; index++) {
-
-						try {
-							opexModel.uploadFolder(omniService, rootIndex, files[index]);
-						}catch(Exception e) {}
-
-					}*/
 					
 					opexTable.getItems().stream().forEach(opexFolder -> {
 						try {
+							mainController.getLoggerTextArea().appendText("\nStart Upload Process For ( " + opexFolder.getFolderID() + " )");
 							
 							opexModel.uploadFolder(omniService, rootIndex, new File(opexFolder.getFolderPath()));
 							
-							opexFolder.setStatus("Finished");
+							mainController.getLoggerTextArea().appendText("Finish Process For ( " + opexFolder.getFolderID() + " )\n\n" );
+							
+							opexFolder.setStatus("\nFinish Process." );
 							
 						}catch(Exception e) {
 							e.printStackTrace();

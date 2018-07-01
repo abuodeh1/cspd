@@ -3,9 +3,13 @@ package opex.controller;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -56,7 +60,7 @@ public class OpexModel {
 		Folder addedFolder = addFolderProcess(omniService, parentFolderID, folder, dataDefinition);
 
 		try {
-			uploadDocumentsToOmnidocs(omniService, batch, dataDefinition, addedFolder);
+			uploadDocumentsToOmnidocs(omniService, batch, addedFolder.getFolderIndex(), folder);
 		} finally {
 			moveTransferedFolder(folder);
 		}
@@ -70,12 +74,40 @@ public class OpexModel {
 			String dest = (String) mainController.getApplicationProperties().get("omnidocs.transferDest");
 
 			try {
+				File fileDest = new File(dest  + System.getProperty("file.separator")+ folder.getName());
+				if(!fileDest.exists()) 
+					fileDest.mkdirs();
 				
-				Files.move(Paths.get(folder.getPath()), Paths.get(new File(dest).getPath()), StandardCopyOption.REPLACE_EXISTING);
+				//Files.move(Paths.get(folder.getPath()), Paths.get(file.getPath()), StandardCopyOption.REPLACE_EXISTING);
+				
+				Files.walkFileTree(fileDest.toPath(), new SimpleFileVisitor<Path>() {
+					
+					public Path fromPath;
+				    public Path toPath;
+				    private StandardCopyOption copyOption = StandardCopyOption.REPLACE_EXISTING;
+				    
+					@Override
+				    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+				        Path targetPath = toPath.resolve(fromPath.relativize(dir));
+				        if(!Files.exists(targetPath)){
+				            Files.createDirectory(targetPath);
+				        }
+				        return FileVisitResult.CONTINUE;
+				    }
+
+				    @Override
+				    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+				        Files.move(file, toPath.resolve(fromPath.relativize(file)), copyOption);
+				        return FileVisitResult.CONTINUE;
+				    }
+				    				    
+				});
+				
+				mainController.writeLog("Folder (" + folder.getName() + ") moved to the destination.");
 				
 				mainController.writeDBLog(new GeneralLog(processLogID, 4, "INFO", "FOLDER NAMED " + folder.getName() + " IS MOVED SUCCESSFULY"));
 				
-			} catch (IOException e) {
+			} catch (Exception e) {
 				
 				mainController.writeLog("Unable to move the (" + folder.getName() + ") for the destination.");
 				
@@ -88,32 +120,62 @@ public class OpexModel {
 		
 	}
 
+	class MoveDirectory extends SimpleFileVisitor<Path> {
+		
+		public Path fromPath;
+	    public Path toPath;
+	    private StandardCopyOption copyOption = StandardCopyOption.REPLACE_EXISTING;
+
+	    MoveDirectory(Path fromPath, Path toPath){
+	    	this.fromPath = fromPath;
+	    	this.toPath = toPath;
+	    }
+	    
+		@Override
+	    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+	        Path targetPath = toPath.resolve(fromPath.relativize(dir));
+	        if(!Files.exists(targetPath)){
+	            Files.createDirectory(targetPath);
+	        }
+	        return FileVisitResult.CONTINUE;
+	    }
+
+	    @Override
+	    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+	        Files.move(file, toPath.resolve(fromPath.relativize(file)), copyOption);
+	        return FileVisitResult.CONTINUE;
+	    }
+	    				    
+	}
+	
 	private void folderExistProcess(OmniService omniService, String parentFolderID, File folder) throws FolderException {
 		
 		List<Folder> folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, folder.getName(), false);
 		
 		boolean isFound = (folderRs.size() > 0);
 		
-		if( Boolean.valueOf((String)mainController.getApplicationProperties().get("omnidocs.deleteFolderIfExist")) ){
-			if(isFound) {
+		if(isFound) {
+			
+			mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "DOES FOLDER NAMED " + folder.getName() + " FOUND? " + isFound));
+					
+			if( Boolean.valueOf((String)mainController.getApplicationProperties().get("omnidocs.deleteFolderIfExist")) ){
 				mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "DOES FOLDER NAMED " + folder.getName() + " FOUND? " + isFound));
 				try {
 						omniService.getFolderUtility().deleteFolder(folderRs.get(0).getFolderIndex());
 						mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "FOLDER NAMED " + folder.getName() + " IS DELETED SUCCESSFULY"));
+				
 				}catch(FolderException fe) {
+					
 					mainController.writeLog("Unable delete the (" + folder.getName() + ") from omnidocs.");
 					mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "UNABLE TO DELETE FOLDER NAMED " + folder.getName()));
 					throw new FolderException("Unable delete the (" + folder.getName() + ") from omnidocs.");
 				}
 			}
-		} else {
-			
-			mainController.writeDBLog(new GeneralLog(processLogID, 2, "ERROR", "UNABLE TO CONTINUE WITH FOLDER ALREADY EXISTS"));
-			
-			throw new FolderException("Unable to continue with folder already exists");
 
 		}
+
 	}
+	
 	private Batch readBatchOXI(File folder) throws Exception {
 
 		String folderPath = folder.getAbsolutePath();
@@ -124,18 +186,19 @@ public class OpexModel {
 		Batch batch = null;
 		try {
 			batch = NGOHelper.getResponseAsPOJO(Batch.class, new String(Files.readAllBytes(new File(batchOXI).toPath())));
-			
-			processLogID = 
-					mainController.writeDBLog(new ProcessLog(batch.getBatchIdentifier(), batch.getBaseMachine(), batch.getStartTime(), 
-							   batch.getEndInfo().getEndTime(), folder.listFiles().length, false, false, 0, 0));
-			
-			mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "OXI FILE PARSED SUCCESSFULY WITH " + batchOXI));
-			
+
 		}catch(Exception fe) {
 			mainController.writeLog("Unable to parse " + batchOXI);
 			mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "UNABLE TO PARSE OXI FILE " + batchOXI));
 			throw new Exception(fe);
 		}
+		
+		processLogID = 
+				mainController.writeDBLog(new ProcessLog(batch.getBatchIdentifier(), batch.getBaseMachine(), batch.getStartTime(), 
+						   batch.getEndInfo().getEndTime(), folder.listFiles().length, false, false, 0, 0));
+		
+		mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "OXI FILE PARSED SUCCESSFULY WITH " + batchOXI));
+		
 		
 		return batch;
 		
@@ -164,7 +227,7 @@ public class OpexModel {
 		return addedFolder;
 	}
 	
-	private void uploadDocumentsToOmnidocs(OmniService omniService, Batch batch, DataDefinition dataDefinition, Folder folder) throws DocumentException {
+	private void uploadDocumentsToOmnidocs(OmniService omniService, Batch batch, String folderIndex, File physicalFolder) throws DocumentException {
 		
 		boolean thereIsError = false;
 		
@@ -172,7 +235,7 @@ public class OpexModel {
 		
 		// read opex xml
 
-		String scanFolderPath = batch.getImageFilePath();
+		String scanFolderPath = physicalFolder.getAbsolutePath();//batch.getImageFilePath();
 
 		// fetch metadata from database from index per file
 
@@ -201,19 +264,26 @@ public class OpexModel {
 						Image image = images.next();
 						
 						Document document = new Document();							
-						document.setParentFolderIndex(folder.getFolderIndex());							
+						document.setParentFolderIndex(folderIndex);							
 						document.setDocumentName(image.getFilename());
 						
 						String imagePath = scanFolderPath + System.getProperty("file.separator") + image.getFilename();
 						
 						try {
-							omniService.getDocumentUtility().addDocument(new File(imagePath), document);
-							mainController.writeLog(imagePath + " uploaded successfuly.");
+							boolean additionFlag = true;
+							if(!image.getSide().equalsIgnoreCase("FRONT") && image.getFilename().trim().length() == 0) {
+								additionFlag = false;
+							}
 							
-							mainController.writeDBLog(new ProcessDetailsLog(processLogID, document.getDocumentName(), true));
-					
-							mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "DOCUMENT ADDED SUCCESSFULLY WITH " + imagePath));
-							
+							if(additionFlag) {
+								omniService.getDocumentUtility().addDocument(new File(imagePath), document);
+								
+								mainController.writeLog(imagePath + " uploaded successfuly.");
+								
+								mainController.writeDBLog(new ProcessDetailsLog(processLogID, document.getDocumentName(), true));
+						
+								mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "DOCUMENT ADDED SUCCESSFULLY WITH " + imagePath));
+							}
 						} catch (DocumentException e) {
 							thereIsError = true;
 							mainController.writeLog("Unable to upload " + imagePath);
@@ -362,7 +432,7 @@ public class OpexModel {
 
 	public DataDefinition prepareDataDefinition(OmniService omniService, int dataDefinitionType, String fileID) {
 
-		BatchDetails batchDetails = getDataDefinitionFromDB(fileID);
+		BatchDetails batchDetails = getDataDefinitionFromDB("018/01/0000061");//fileID);
 
 		DataDefinition dataDefinition = null;
 

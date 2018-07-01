@@ -61,11 +61,11 @@ public class SettingTabController {
 				rootIndex.setText(props.getProperty("omnidocs.root"));
 				omniUser.setText(props.getProperty("omnidocs.omniUser"));
 				omniUserPassword.setText(props.getProperty("omnidocs.omniUserPassword"));
-				deleteFolderIfExist.setText(props.getProperty("omnidocs.deleteFolderIfExist"));
+				deleteFolderIfExist.setSelected(Boolean.valueOf(props.getProperty("omnidocs.deleteFolderIfExist")));
 				dbUrl.setText(props.getProperty("db.url"));
 				dbPassword.setText(props.getProperty("db.password"));
 				dbUser.setText(props.getProperty("db.user"));
-				transfer.setText(props.getProperty("omnidocs.transfer"));
+				transfer.setSelected(Boolean.valueOf(props.getProperty("omnidocs.transfer")));
 				transferDest.setText(props.getProperty("omnidocs.transferDest"));
 				
 			}
