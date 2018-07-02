@@ -49,71 +49,56 @@ public class OpexModel {
 		this.mainController = mainController;
 	}
 	
-	public void uploadFolder(OmniService omniService, String parentFolderID, File folder) throws Exception {
+	public void uploadFolder(OmniService omniService, String parentFolderID, File opexFolder) throws Exception {
 			
-		Batch batch = readBatchOXI(folder);
+		Batch batch = readBatchOXI(opexFolder);
 		
-		DataDefinition dataDefinition = prepareDataDefinition(omniService, 1, folder.getName());
+		DataDefinition dataDefinition = prepareDataDefinition(omniService, 1, opexFolder.getName());
 		
-		folderExistProcess(omniService, parentFolderID, folder);
+		folderExistProcess(omniService, parentFolderID, opexFolder);
 		
-		Folder addedFolder = addFolderProcess(omniService, parentFolderID, folder, dataDefinition);
+		Folder addedFolder = addFolderProcess(omniService, parentFolderID, opexFolder, dataDefinition);
 
 		try {
-			uploadDocumentsToOmnidocs(omniService, batch, addedFolder.getFolderIndex(), folder);
+			
+			uploadDocumentsToOmnidocs(omniService, batch, addedFolder.getFolderIndex(), opexFolder);
+			
 		} finally {
-			moveUploadedFolder(folder);
-		}
 		
+			if(opexFolder.listFiles().length == 1) {
+				
+				moveUploadedFile(opexFolder.listFiles()[0]);
+				
+				opexFolder.delete();
+			}
+		}
 	}
 	
-	private void moveUploadedFolder(File folder) throws Exception {
+	private void moveUploadedFile(File file) throws Exception {
 		
 		if( Boolean.valueOf((String)mainController.getApplicationProperties().get("omnidocs.transfer")) ){
 			
 			String dest = (String) mainController.getApplicationProperties().get("omnidocs.transferDest");
 
 			try {
-				File fileDest = new File(dest + System.getProperty("file.separator") + folder.getName());
+				File fileDest = new File(dest + System.getProperty("file.separator") + file.getParentFile().getName() + System.getProperty("file.separator") + file.getName());
 				if(!fileDest.exists()) 
 					fileDest.mkdirs();
 				
-				//Files.move(Paths.get(folder.getPath()), Paths.get(file.getPath()), StandardCopyOption.REPLACE_EXISTING);
+				Files.move(file.toPath(), fileDest.toPath(), StandardCopyOption.REPLACE_EXISTING);
 				
-				/*Files.walkFileTree(fileDest.toPath(), new SimpleFileVisitor<Path>() {
-					
-					public Path fromPath;
-				    public Path toPath;
-				    private StandardCopyOption copyOption = StandardCopyOption.REPLACE_EXISTING;
-				    
-					@Override
-				    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-				        Path targetPath = toPath.resolve(fromPath.relativize(dir));
-				        if(!Files.exists(targetPath)){
-				            Files.createDirectory(targetPath);
-				        }
-				        return FileVisitResult.CONTINUE;
-				    }
-
-				    @Override
-				    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-				        Files.copy(file, toPath.resolve(fromPath.relativize(file)), copyOption);
-				        return FileVisitResult.CONTINUE;
-				    }
-				    				    
-				});
-				*/
-				move(folder, fileDest);
+				//move(folder, fileDest);
 				
-				mainController.writeLog("Folder (" + folder.getName() + ") moved to the destination.");
+				mainController.writeLog("Folder (" + file.getName() + ") moved to the destination.");
 				
-				mainController.writeDBLog(new GeneralLog(processLogID, 4, "INFO", "FOLDER NAMED " + folder.getName() + " IS MOVED SUCCESSFULY"));
-				
+				mainController.writeDBLog(new GeneralLog(processLogID, 4, "INFO", "FILE NAMED " + file.getName() + " IS MOVED SUCCESSFULY"));
 			} catch (Exception e) {
 				
-				mainController.writeLog("Unable to move the (" + folder.getName() + ") for the destination.");
+				e.printStackTrace();
 				
-				mainController.writeDBLog(new GeneralLog(processLogID, 4, "INFO", "UNABLE TO MOVE FOLDER NAMED " + folder.getName()));
+				mainController.writeLog("Unable to move the (" + file.getName() + ") for the destination.");
+				
+				mainController.writeDBLog(new GeneralLog(processLogID, 4, "INFO", "UNABLE TO MOVE FILE NAMED " + file.getName()));
 				
 				throw e;
 			}
@@ -136,34 +121,6 @@ public class OpexModel {
 	        }
 	    }
 	    return false;
-	}
-	
-	class MoveDirectory extends SimpleFileVisitor<Path> {
-		
-		public Path fromPath;
-	    public Path toPath;
-	    private StandardCopyOption copyOption = StandardCopyOption.REPLACE_EXISTING;
-
-	    MoveDirectory(Path fromPath, Path toPath){
-	    	this.fromPath = fromPath;
-	    	this.toPath = toPath;
-	    }
-	    
-		@Override
-	    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-	        Path targetPath = toPath.resolve(fromPath.relativize(dir));
-	        if(!Files.exists(targetPath)){
-	            Files.createDirectory(targetPath);
-	        }
-	        return FileVisitResult.CONTINUE;
-	    }
-
-	    @Override
-	    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-	        Files.move(file, toPath.resolve(fromPath.relativize(file)), copyOption);
-	        return FileVisitResult.CONTINUE;
-	    }
-	    				    
 	}
 	
 	private void folderExistProcess(OmniService omniService, String parentFolderID, File folder) throws FolderException {
@@ -301,15 +258,27 @@ public class OpexModel {
 								mainController.writeDBLog(new ProcessDetailsLog(processLogID, document.getDocumentName(), true));
 						
 								mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "DOCUMENT ADDED SUCCESSFULLY WITH " + imagePath));
+								
+								moveUploadedFile(new File(imagePath));
+
 							}
 						} catch (DocumentException e) {
+							
 							thereIsError = true;
+							
 							mainController.writeLog("Unable to upload " + imagePath);
+							
 							mainController.writeDBLog(new ProcessDetailsLog(processLogID, document.getDocumentName(), false));
 							
 							mainController.writeDBLog(new GeneralLog(processLogID, 2, "ERROR", "UNABLE TOT ADD DOCUMENT " + imagePath));
+							
 							e.printStackTrace();
-						}
+							
+						} catch (Exception e) {
+							
+							thereIsError = true;
+							e.printStackTrace();
+						} 
 					}
 
 				}

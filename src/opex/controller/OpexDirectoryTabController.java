@@ -73,6 +73,8 @@ public class OpexDirectoryTabController {
 	@FXML
 	private void handleUploadToOmnidocsButton(ActionEvent event){
 		
+		mainController.getLoggerTextArea().clear();
+		
 		try {
 			
 			String host = mainController.getApplicationProperties().getProperty("omnidocs.host");
@@ -88,7 +90,9 @@ public class OpexDirectoryTabController {
 							(cabinet == null || cabinet.trim().length() == 0) && 
 								(username == null || username.trim().length() == 0) && 
 									(password == null || password.trim().length() == 0)) {
+				
 				mainController.errorAlert("Omnidocs Settings Problem", new Exception("Please check Omnidos in setting tab."));
+				
 				return;
 			}
 			
@@ -116,17 +120,19 @@ public class OpexDirectoryTabController {
 							opexFolder.setStatus("Finish Process." );
 							
 						}catch(Exception e) {
-							e.printStackTrace();
 							
 							mainController.writeLog("Finish Process With Errors");
 							
 							opexFolder.setStatus("Finished with Errors");
 							
+							e.printStackTrace();
+							
+							
 						}finally {
 							
 							opexTable.refresh();
 						}
-						
+
 						
 					});
 					
@@ -158,6 +164,7 @@ public class OpexDirectoryTabController {
 			e.printStackTrace();
 			
 		}
+
 	}
 	
 	@FXML

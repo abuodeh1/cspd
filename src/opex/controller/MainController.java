@@ -138,7 +138,11 @@ public class MainController {
 
 			@Override
 			protected Void call() throws Exception {
-				getLoggerTextArea().appendText("\n" + msg);
+				try {
+					getLoggerTextArea().appendText("\n" + msg);
+				}catch(Exception e) {
+					e.printStackTrace();
+				}
 				return null;
 			}
 		};
