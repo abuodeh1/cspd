@@ -55,6 +55,11 @@
 								<fx:include fx:id="opexDirectoryTab" source="OpexDirectoryTab.fxml" />
 							</content>
 						</Tab>
+						<Tab text="Sync Folders">
+							<content>
+								<fx:include fx:id="syncTab" source="SyncTab.fxml" />
+							</content>
+						</Tab>
 						<Tab text="Logger">
 							<content>
 								<fx:include fx:id="loggerTab" source="LoggerTab.fxml" />

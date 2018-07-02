@@ -123,7 +123,7 @@ public class OpexModel {
 	    return false;
 	}
 	
-	private void folderExistProcess(OmniService omniService, String parentFolderID, File folder) throws FolderException {
+	private void folderExistProcess(OmniService omniService, String parentFolderID, File folder) throws FolderException, Exception {
 		
 		List<Folder> folderRs = omniService.getFolderUtility().findFolderByName(parentFolderID, folder.getName(), false);
 		
@@ -179,7 +179,7 @@ public class OpexModel {
 		
 	}
 	
-	private Folder addFolderProcess(OmniService omniService, String parentFolderID, File folder, DataDefinition dataDefinition) throws FolderException {
+	private Folder addFolderProcess(OmniService omniService, String parentFolderID, File folder, DataDefinition dataDefinition) throws FolderException, Exception {
 		
 		Folder addedFolder = null;
 		
@@ -202,7 +202,7 @@ public class OpexModel {
 		return addedFolder;
 	}
 	
-	private void uploadDocumentsToOmnidocs(OmniService omniService, Batch batch, String folderIndex, File physicalFolder) throws DocumentException {
+	private void uploadDocumentsToOmnidocs(OmniService omniService, Batch batch, String folderIndex, File physicalFolder) throws DocumentException, Exception {
 		
 		boolean thereIsError = false;
 		
@@ -292,22 +292,6 @@ public class OpexModel {
 		}
 	}
 	
-/*	private void writeDBLog(String msg) {
-		
-		Connection connection = mainController.getSqlConnectionPoolService().get();
-		
-		Task task = new Task<Void>() {
-
-			@Override
-			protected Void call() throws Exception {
-				PreparedStatement preparedStatement = connection.prepareStatement("");
-				preparedStatement.executeQuery();
-				return null;
-			}
-		};
-		new Thread(task).start();
-	}
-*/
 	public void exportTaskWithoutSubfolder(OmniService omniService, String folderID, String folderDestination) throws Exception {
 
 		long startDate = System.currentTimeMillis();
@@ -403,6 +387,31 @@ public class OpexModel {
 		}
 	}
 	
+	public void exportDocument(OmniService omniService, String folderID, String documentIndex) {
+		
+		if( Boolean.valueOf((String)mainController.getApplicationProperties().get("omnidocs.transfer")) ){
+			
+			String dest = (String) mainController.getApplicationProperties().get("omnidocs.transferDest");
+			
+			try {
+				
+				if(new File(dest).exists()) {
+					
+					mainController.writeLog("Destination folder does't exist to sync");
+					return;
+				}
+				
+				omniService.getDocumentUtility().exportDocument(dest, documentIndex);
+				
+				mainController.writeLog("A document synced successfuly");
+				
+			} catch (DocumentException e) {
+				mainController.writeLog("Unable to sync a document");
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	private String resolveInvlidFilenameChars(String filename) {
 		String resolvedFilename = filename.replace('\\', '_');
 		resolvedFilename = resolvedFilename.replace('/', '_');
@@ -417,7 +426,7 @@ public class OpexModel {
 		return resolvedFilename;
 	}
 
-	public DataDefinition prepareDataDefinition(OmniService omniService, int dataDefinitionType, String fileID) {
+	public DataDefinition prepareDataDefinition(OmniService omniService, int dataDefinitionType, String fileID) throws Exception {
 
 		BatchDetails batchDetails = getDataDefinitionFromDB("018/01/0000061");//fileID);
 
@@ -473,13 +482,14 @@ public class OpexModel {
 
 	}
 
-	private BatchDetails getDataDefinitionFromDB(String recordPrimaryKey) {
+	private BatchDetails getDataDefinitionFromDB(String recordPrimaryKey) throws Exception {
 
 		BatchDetails batchDetails = new BatchDetails();
 
-		Connection connection = mainController.getSqlConnectionPoolService().get();
-		
 		try {
+			
+			Connection connection = mainController.getSqlConnectionPoolService().get();
+			
 			PreparedStatement ps = connection.prepareStatement("SELECT * FROM BatchDetails WHERE SerialNumber = ?");
 			ps.setString(1, recordPrimaryKey);
 
@@ -500,9 +510,10 @@ public class OpexModel {
 
 			mainController.writeDBLog(new GeneralLog(processLogID, 3, "INFO", "DATADEFINITION FETCHED UP FROM DATABASE SUCCESSFULY"));
 			
-		} catch (SQLException e) {
+		} catch (Exception e) {
 
 			mainController.writeDBLog(new GeneralLog(processLogID, 3, "ERROR", "UNABLE TO FETCHED UP DATADEFINITION FROM DATABASE"));
+			
 			e.printStackTrace();
 
 		} 

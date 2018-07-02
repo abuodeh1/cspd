@@ -32,9 +32,6 @@ public class OpexDirectoryTabController {
 	@FXML private TableColumn<OpexFolder, String> status;
 	@FXML private Button uploadToOmnidocsButton;
 	
-	private OmniService omniService;
-	private OpexModel opexModel;
-	
 	@FXML public void initialize() {
 		folder.setCellValueFactory(new PropertyValueFactory<>("folderID"));
 		noOfDocuments.setCellValueFactory(new PropertyValueFactory<>("numberOfDocument"));
@@ -77,30 +74,17 @@ public class OpexDirectoryTabController {
 		
 		try {
 			
-			String host = mainController.getApplicationProperties().getProperty("omnidocs.host");
-			String port = mainController.getApplicationProperties().getProperty("omnidocs.port");
 			String rootIndex = mainController.getApplicationProperties().getProperty("omnidocs.root");
-			String cabinet = mainController.getApplicationProperties().getProperty("omnidocs.cabinet");
-			String username = mainController.getApplicationProperties().getProperty("omnidocs.omniUser");
-			String password = mainController.getApplicationProperties().getProperty("omnidocs.omniUserPassword");
-			
-			if( (host == null || host.trim().length() == 0) && 
-					(port == null || port.trim().length() == 0) && 
-						(rootIndex == null || rootIndex.trim().length() == 0) && 
-							(cabinet == null || cabinet.trim().length() == 0) && 
-								(username == null || username.trim().length() == 0) && 
-									(password == null || password.trim().length() == 0)) {
+			if( rootIndex == null || rootIndex.trim().length() == 0 ) {
 				
-				mainController.errorAlert("Omnidocs Settings Problem", new Exception("Please check Omnidos in setting tab."));
+				mainController.errorAlert("Cann't continue without specifying a folder root to upload", new Exception("Please check Omnidocs in setting tab."));
 				
 				return;
 			}
 			
-			omniService = new OmniService(host, Integer.valueOf(port), true);
+			OmniService omniService = mainController.getOmniService();
 			
-			omniService.openCabinetSession(username, password, cabinet, false, "S");
-			
-			opexModel = new OpexModel(mainController);
+			OpexModel opexModel = new OpexModel(mainController);
 			
 			Task<Void> task = new Task<Void>() {
 				
@@ -174,9 +158,11 @@ public class OpexDirectoryTabController {
 		directoryChooser.setTitle("Choose Opex Batch Directory");
 		
 		batchDirectory = directoryChooser.showDialog(null);
-		openDirectoryTextField.setText(batchDirectory.getAbsolutePath());
+		if(batchDirectory!= null) {
+			openDirectoryTextField.setText(batchDirectory.getAbsolutePath());
+			populateOpexTable();
+		}
 		
-		populateOpexTable();
 	}
 
 	public class OpexFolder {

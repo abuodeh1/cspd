@@ -12,13 +12,17 @@ import cspd.core.GeneralLog;
 import cspd.core.Log;
 import cspd.core.ProcessDetailsLog;
 import cspd.core.ProcessLog;
+import etech.omni.OmniService;
 import etech.resource.pool.PoolFactory;
 import etech.resource.pool.PoolService;
+import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -35,8 +39,12 @@ public class MainController {
 	@FXML private LoggerController loggerTabController;
 	@FXML private OpexDirectoryTabController opexDirectoryTabController;
 	@FXML private SettingTabController settingTabController;
+	@FXML private SyncTabController syncTabController;
+	
+	private OmniService omniService;
 	
 	private PoolService<Connection> sqlConnectionPoolService;
+	private PoolService<Connection> oracleConnectionPoolService;
 	
 	private Properties props;
 	
@@ -47,13 +55,16 @@ public class MainController {
 		opexDirectoryTabController.injectMainController(this);
 		
 		settingTabController.injectMainController(this);
-
+		
+		syncTabController.injectMainController(this);
+		
 		String url = getApplicationProperties().getProperty("db.url");
 		String user = getApplicationProperties().getProperty("db.user");
 		String password = getApplicationProperties().getProperty("db.password");
-				
-		sqlConnectionPoolService = PoolFactory.newSingleConnection(url, user, password);
+		String driver = "net.sourceforge.jtds.jdbc.Driver";
 		
+		sqlConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
+
 	}
 
 	public TextArea getLoggerTextArea() {
@@ -68,12 +79,109 @@ public class MainController {
 		
 	}
 
-	public PoolService<Connection> getSqlConnectionPoolService() {
+	
+	public OmniService getOmniService() throws Exception{
+		
+		try {
+			String host = getApplicationProperties().getProperty("omnidocs.host");
+			String port = getApplicationProperties().getProperty("omnidocs.port");
+			String cabinet = getApplicationProperties().getProperty("omnidocs.cabinet");
+			String username = getApplicationProperties().getProperty("omnidocs.omniUser");
+			String password = getApplicationProperties().getProperty("omnidocs.omniUserPassword");
+			
+			if( (host == null || host.trim().length() == 0) && 
+					(port == null || port.trim().length() == 0) && 
+							(cabinet == null || cabinet.trim().length() == 0) && 
+								(username == null || username.trim().length() == 0) && 
+									(password == null || password.trim().length() == 0)) {
+				
+				throw new Exception ("Omnidocs Settings Problem, Please check the settings.");
+	
+			}
+			
+			omniService = new OmniService(host, Integer.valueOf(port), true);
+			
+			omniService.openCabinetSession(username, password, cabinet, false, "S");
+		
+		} catch (Exception e) {
+			
+			e.printStackTrace();
+			
+			throw new Exception ("Omnidocs Communication Problem");
+
+		}
+		
+		return omniService;
+	}
+
+	public void setOmniService(OmniService omniService) {
+		this.omniService = omniService;
+	}
+
+	public PoolService<Connection> getSqlConnectionPoolService() throws Exception{
+		
+		String url = settingTabController.getApplicationProperties().getProperty("db.url");
+		String user = settingTabController.getApplicationProperties().getProperty("db.user");
+		String password = settingTabController.getApplicationProperties().getProperty("db.password");
+		String driver = "net.sourceforge.jtds.jdbc.Driver";
+		try {
+			
+			if( (url == null || url.trim().length() == 0) && 
+					(user == null || user.trim().length() == 0) && 
+							(password == null || password.trim().length() == 0) ) {
+				
+				throw new Exception ("Database Settings Problem, Please check the settings.");
+				
+			}
+			
+			sqlConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
+
+		}catch(Exception e) {
+			
+			e.printStackTrace();
+			
+			throw new Exception ("Unable to create a connection");
+
+		}
+		
 		return sqlConnectionPoolService;
 	}
 
 	public void setSqlConnectionPoolService(PoolService<Connection> sqlConnectionPoolService) {
 		this.sqlConnectionPoolService = sqlConnectionPoolService;
+	}
+	
+	public PoolService<Connection> getOracleConnectionPoolService() throws Exception{
+		
+		String url = "jdbc:oracle:thin:@192.168.60.93:1521:etech11g";//settingTabController.getApplicationProperties().getProperty("db.url");
+		String user = "jlgccab1";//settingTabController.getApplicationProperties().getProperty("db.user");
+		String password = "jlgccab1";//settingTabController.getApplicationProperties().getProperty("db.password");
+		String driver = "oracle.jdbc.driver.OracleDriver";
+		try {
+			
+			if( (url == null || url.trim().length() == 0) && 
+					(user == null || user.trim().length() == 0) && 
+							(password == null || password.trim().length() == 0) ) {
+				
+				throw new Exception ("Database Settings Problem, Please check the settings.");
+				
+			}
+			
+			sqlConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
+
+		}catch(Exception e) {
+			
+			e.printStackTrace();
+			
+			throw new Exception ("Unable to create a connection");
+
+		}
+		
+		return sqlConnectionPoolService;
+	}
+
+	public void setOracleConnectionPoolService(PoolService<Connection> oracleConnectionPoolService) {
+		this.oracleConnectionPoolService = oracleConnectionPoolService;
 	}
 
 	@FXML
@@ -252,14 +360,6 @@ public class MainController {
 		return logID;
 	}
 
-	@Override
-	public void finalize() throws Exception {
-		sqlConnectionPoolService.close();
-
-	}
-	
-	
-	
 }
 
 

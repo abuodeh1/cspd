@@ -39,7 +39,7 @@ public class SettingTabController {
 
 	private Properties props;
 	
-	@FXML private void initialize() {
+	@FXML public void initialize() {
 
 		fileProps = new File("application.properties");
 		

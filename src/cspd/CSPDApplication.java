@@ -1,13 +1,17 @@
 package cspd;
 
 import javafx.application.Application;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import opex.controller.MainController;
 
 public class CSPDApplication extends Application {
+	
+	MainController mainController;
 	
 	public static void main(String[] args) {
 
@@ -15,12 +19,19 @@ public class CSPDApplication extends Application {
 		
 	}
 	
+	@FXML public void initialize() {
+		
+	}
+	
 	@Override
 	public void start(Stage primaryStage) {
 		try {
 			
-			Parent batchPanel = FXMLLoader.load(getClass().getResource("../opex/fx/MainContainer.fxml"));
+			FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("../opex/fx/MainContainer.fxml"));
 			
+			Parent batchPanel = fxmlLoader.load();
+			
+			mainController = (MainController)fxmlLoader.getController();
 			Scene scene = new Scene(batchPanel);
 			scene.getStylesheets().add(getClass().getResource("../opex/fx/application.css").toExternalForm());
 			
@@ -28,20 +39,12 @@ public class CSPDApplication extends Application {
 			primaryStage.setTitle("CSPD Utility");
 			primaryStage.setScene(scene);
 			primaryStage.show();
+
 			
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 
 	}
-	
-	
-
-	@Override
-	public void stop() throws Exception {
-		// TODO Auto-generated method stub
-		super.stop();
-	}
-	
 
 }

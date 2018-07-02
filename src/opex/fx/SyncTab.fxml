@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="511.0" prefWidth="623.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="opex.controller.SyncTabController">
+   <children>
+      <AnchorPane layoutY="37.0" prefHeight="36.0" prefWidth="616.0">
+         <children>
+            <Label layoutX="177.0" text="Sync for" />
+            <ComboBox fx:id="daysBefore" layoutX="238.0" layoutY="-4.0" onAction="#handleSyncBeforeComboBox" prefHeight="25.0" prefWidth="164.0" />
+         </children>
+      </AnchorPane>
+      <TableView fx:id="changesTable" layoutX="23.0" layoutY="73.0" prefHeight="387.0" prefWidth="580.0">
+        <columns>
+          <TableColumn fx:id="folder" prefWidth="251.0" text="Folder" />
+          <TableColumn fx:id="noOfDocuments" prefWidth="150.0" text="Document Changes" />
+            <TableColumn fx:id="status" prefWidth="150.0" text="Status" />
+        </columns>
+      </TableView>
+      <Button fx:id="syncButton" alignment="CENTER" layoutX="269.0" layoutY="472.0" mnemonicParsing="false" onAction="#handleSyncButton" prefHeight="25.0" prefWidth="79.0" text="Sync" />
+   </children>
+</AnchorPane>
