@@ -294,9 +294,8 @@ public class MainController {
 			};
 			new Thread(task).start();
 			
-		}else
-		
-		if(log instanceof ProcessLog) {
+		}else if(log instanceof ProcessLog) {
+			
 			Task task = new Task<Integer>() {
 
 				@Override
@@ -328,9 +327,8 @@ public class MainController {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}else
-		
-		if(log instanceof ProcessDetailsLog) {
+		}else if(log instanceof ProcessDetailsLog) {
+			
 			Task task = new Task<Void>() {
 
 				@Override

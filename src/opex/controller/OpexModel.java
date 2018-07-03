@@ -1,23 +1,21 @@
 package opex.controller;
 
+import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import cspd.BatchDetails;
 import cspd.core.GeneralLog;
@@ -33,6 +31,7 @@ import etech.omni.core.Folder;
 import etech.omni.helper.NGOHelper;
 import etech.omni.utils.OmniDocumentUtility;
 import etech.omni.utils.OmniFolderUtility;
+import opex.controller.SyncTabController.DocumentAction;
 import opex.element.Batch;
 import opex.element.Batch.Transaction;
 import opex.element.Batch.Transaction.Group;
@@ -91,7 +90,7 @@ public class OpexModel {
 				
 				mainController.writeLog("Folder (" + file.getName() + ") moved to the destination.");
 				
-				mainController.writeDBLog(new GeneralLog(processLogID, 4, "INFO", "FILE NAMED " + file.getName() + " IS MOVED SUCCESSFULY"));
+				mainController.writeDBLog(new GeneralLog(processLogID, 4, "INFO", "FILE NAMED " + file.getName() + " MOVED SUCCESSFULY"));
 			} catch (Exception e) {
 				
 				e.printStackTrace();
@@ -131,13 +130,13 @@ public class OpexModel {
 		
 		if(isFound) {
 			
-			mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "DOES FOLDER NAMED " + folder.getName() + " FOUND? " + isFound));
+			mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "FOLDER NAMED " + folder.getName() + " FOUND? " + isFound));
 					
 			if( Boolean.valueOf((String)mainController.getApplicationProperties().get("omnidocs.deleteFolderIfExist")) ){
-				mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "DOES FOLDER NAMED " + folder.getName() + " FOUND? " + isFound));
+				mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "FOLDER NAMED " + folder.getName() + " FOUND? " + isFound));
 				try {
 						omniService.getFolderUtility().deleteFolder(folderRs.get(0).getFolderIndex());
-						mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "FOLDER NAMED " + folder.getName() + " IS DELETED SUCCESSFULY"));
+						mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "FOLDER NAMED " + folder.getName() + " DELETED SUCCESSFULY"));
 				
 				}catch(FolderException fe) {
 					
@@ -191,7 +190,7 @@ public class OpexModel {
 			preparedFolder.setDataDefinition(dataDefinition);
 			
 			addedFolder = omniService.getFolderUtility().addFolder(parentFolderID, preparedFolder);
-			mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "FOLDER NAMED IS ADDED SUCCESSFULY"));
+			mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "FOLDER NAMED ADDED SUCCESSFULY"));
 
 		}catch(Exception fe) {
 			mainController.writeLog("Unable to find " + folder.getName() + " in omnidocs");
@@ -285,13 +284,35 @@ public class OpexModel {
 			}
 		}
 		
-		mainController.writeLog("Time Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+".");
+		long completeTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate);
+		mainController.writeLog("Time Completed with: " + completeTime + ".");
+		
+		updateProcessLogInfo(physicalFolder.getName(), completeTime);
 		
 		if(thereIsError) {
 			throw new DocumentException("Some Documents Failed.");
 		}
 	}
 	
+	private void updateProcessLogInfo(String folderName, long seconds) {
+		try {
+			
+			Connection connection = mainController.getSqlConnectionPoolService().get();
+			
+			PreparedStatement ps = connection.prepareStatement("UPDATE ProcessLog SET UploadedToOmniDocsTime = ?, UploadedToOmniDocs = 'true' WHERE BatchIdentifier = ? and LogTimestamp = (SELECT MAX(LogTimestamp) FROM ProcessLog WHERE BatchIdentifier = ?)");
+			ps.setInt(1, (int)seconds);
+			ps.setString(2, folderName);
+			ps.setString(3, folderName);
+			
+			ps.execute();
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+		} 
+	}
+
 	public void exportTaskWithoutSubfolder(OmniService omniService, String folderID, String folderDestination) throws Exception {
 
 		long startDate = System.currentTimeMillis();
@@ -387,28 +408,114 @@ public class OpexModel {
 		}
 	}
 	
-	public void exportDocument(OmniService omniService, String folderID, String documentIndex) {
+	public void exportDocument(OmniService omniService, String folderName, List<DocumentAction> documentActions) throws DocumentException {
+		
+		boolean withErrors = false;
+		
+		processLogID = getProcessLogIdFromDB(folderName);
+		
+		OmniDocumentUtility omniDocumentUtility = omniService.getDocumentUtility();
 		
 		if( Boolean.valueOf((String)mainController.getApplicationProperties().get("omnidocs.transfer")) ){
 			
-			String dest = (String) mainController.getApplicationProperties().get("omnidocs.transferDest");
-			
-			try {
-				
-				if(new File(dest).exists()) {
+			String dest = (String) mainController.getApplicationProperties().get("omnidocs.transferDest") + System.getProperty("file.separator") + folderName;
+
+				if(!new File(dest).exists()) {
 					
-					mainController.writeLog("Destination folder does't exist to sync");
-					return;
+					mainController.writeLog("Destination folder " + dest + " does't exist to sync");
+					
+					mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "DESTINATION FOLDER " + dest + " DOEN'T EXIST TO SYNC" ));
+					
+					throw new DocumentException("Destination folder " + dest + "  does't exist to sync");
 				}
 				
-				omniService.getDocumentUtility().exportDocument(dest, documentIndex);
+				Iterator<DocumentAction> docIterator = documentActions.iterator();
 				
-				mainController.writeLog("A document synced successfuly");
+				while(docIterator.hasNext()) {
+						
+					DocumentAction documentAction = docIterator.next();
+					
+					Document document = null;
+					
+					document = omniDocumentUtility.getDocument(documentAction.getDocumentIndex());
+					
+					
+					String docName = documentAction.getDocumentName()+"."+document.getCreatedByAppName();
+							
+					try {
+						
+						switch(documentAction.getAction()){
+						
+						case 317:
+							
+							boolean isDeleted = new File(dest + System.getProperty("file.separator") + docName).delete();
+							
+							if(isDeleted) {
+								
+								mainController.writeLog("Document " +  docName + " Deleted Successfully");
+								
+								mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "DOCUMENT NAMED " +  docName + " DELETED SUCCESSFULY"));
+								
+							}else {
+								
+								mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "UNABLE TO DELETE DOCUMENT NAMED " +  docName ));
+								
+								throw new Exception("Unable to delete document " +  docName );
+							}
+							
+							break;
+							
+						case 321:
+							
+							document = omniDocumentUtility.getDocument(documentAction.getDocumentIndex());
+							
+							String imagePath = dest + System.getProperty("file.separator") + docName ;
+							
+							omniDocumentUtility.exportDocument(imagePath, document.getDocumentIndex());
+
+							
+							mainController.writeLog("Document (" + docName + ") Synced Successfully");
+							
+							mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "DOCUMENT " +  docName + " SYNCED SUCCESSFULY"));
+							
+							break;
+						}
+						
+						
+					} catch (DocumentException e) {
+						
+						withErrors = true;
+						
+						mainController.writeLog("Unable to sync a document (" +  documentAction.getDocumentName() + ")");
+						
+						mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "UNALBLE TO SYNC DOCUMENT " +  docName ));
+						
+						e.printStackTrace();
+						
+					} catch (Exception e) {
+						
+						withErrors = true;
+						
+						mainController.writeLog(e.getMessage());
+						
+						mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", e.getMessage().toUpperCase() ));
+						
+						e.printStackTrace();
+					}
+					
+				}
 				
-			} catch (DocumentException e) {
-				mainController.writeLog("Unable to sync a document");
-				e.printStackTrace();
-			}
+				
+				if(withErrors) {
+					
+					throw new DocumentException("Unable sync some documents");
+					
+				}else {
+				
+					mainController.writeLog("Sync documents finished");
+				}
+				
+			
 		}
 	}
 	
@@ -523,6 +630,30 @@ public class OpexModel {
 		return batchDetails;
 	}
 
+	private int getProcessLogIdFromDB(String folderName) {
+
+		try {
+			
+			Connection connection = mainController.getSqlConnectionPoolService().get();
+			
+			PreparedStatement ps = connection.prepareStatement("SELECT LogId FROM ProcessLog WHERE BatchIdentifier = ? and LogTimestamp = (SELECT MAX(LogTimestamp) FROM ProcessLog WHERE BatchIdentifier = ?)");
+			ps.setString(1, folderName);
+			ps.setString(2, folderName);
+
+			ResultSet rs = ps.executeQuery();
+			if (rs.next()) {
+				return rs.getInt("LogId");
+			}
+			
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+		} 
+
+		return -1;
+	}
+	
 	private void refillBatch() throws Exception {
 		
 		int imageTempNumber = 1;

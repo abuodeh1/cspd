@@ -16,9 +16,10 @@
       </AnchorPane>
       <TableView fx:id="changesTable" layoutX="23.0" layoutY="73.0" prefHeight="387.0" prefWidth="580.0">
         <columns>
-          <TableColumn fx:id="folder" prefWidth="251.0" text="Folder" />
-          <TableColumn fx:id="noOfDocuments" prefWidth="150.0" text="Document Changes" />
-            <TableColumn fx:id="status" prefWidth="150.0" text="Status" />
+          <TableColumn fx:id="folder" prefWidth="172.0" text="Folder" />
+          <TableColumn fx:id="noOfDocuments" prefWidth="187.0" text="Document" />
+            <TableColumn fx:id="action" prefWidth="96.0" text="Action" />
+            <TableColumn fx:id="status" prefWidth="124.0" text="Status" />
         </columns>
       </TableView>
       <Button fx:id="syncButton" alignment="CENTER" layoutX="269.0" layoutY="472.0" mnemonicParsing="false" onAction="#handleSyncButton" prefHeight="25.0" prefWidth="79.0" text="Sync" />

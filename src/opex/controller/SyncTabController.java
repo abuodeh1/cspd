@@ -1,6 +1,5 @@
 package opex.controller;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import cspd.core.GeneralLog;
 import etech.omni.OmniService;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -36,9 +36,10 @@ public class SyncTabController {
 	private ComboBox<String> daysBefore;
 	@FXML
 	private Button syncButton;
-	
+
 	@FXML TableView<ChangedFolder> changesTable;
 	@FXML private TableColumn<ChangedFolder, String> folder;
+	@FXML private TableColumn<ChangedFolder, String> action;
 	@FXML private TableColumn<ChangedFolder, String> noOfDocuments;
 	@FXML private TableColumn<ChangedFolder, String> status;
 	
@@ -47,12 +48,15 @@ public class SyncTabController {
 	@FXML
 	public void initialize() {
 
-		folder.setCellValueFactory(new PropertyValueFactory<>("folderID"));
-		noOfDocuments.setCellValueFactory(new PropertyValueFactory<>("numberOfDocument"));
+		folder.setCellValueFactory(new PropertyValueFactory<>("folderName"));
+		action.setCellValueFactory(new PropertyValueFactory<>("action"));
+		noOfDocuments.setCellValueFactory(new PropertyValueFactory<>("documentName"));
 		status.setCellValueFactory(new PropertyValueFactory<>("status"));
 		folder.setStyle( "-fx-alignment: CENTER;");
-		noOfDocuments.setStyle( "-fx-alignment: CENTER;");
+		//noOfDocuments.setStyle( "-fx-alignment: CENTER;");
+		action.setStyle( "-fx-alignment: CENTER;");
 		status.setStyle( "-fx-alignment: CENTER;");
+
 		
 		ObservableList<String> options = FXCollections.observableArrayList("2 Days Before", "4 Days Before", "7 Days Before", "14 Days Before");
 
@@ -94,14 +98,18 @@ public class SyncTabController {
 
 			if(mainController.getOmniService().getCabinetUtility().getCabinetinfo().get(0).getDatabaseType().equalsIgnoreCase("oracle")){
 				
-				sqlQuery = "SELECT SUBSDIARYOBJECTID, ACTIVEOBJECTID FROM PDBNEWAUDITTRAIL_TABLE " + 
+				sqlQuery = "SELECT C.PARENTFOLDERINDEX, F.NAME, DOCUMENTINDEX, A.SUBSDIARYOBJECTNAME, ACTIVEOBJECTNAME, ACTIONID, A.OLDVALUE FROM PDBNEWAUDITTRAIL_TABLE A, PDBDOCUMENTCONTENT C, PDBFOLDER F " + 
 							"WHERE ACTIVEOBJECTTYPE='D'  " + 
+							"AND ACTIVEOBJECTID = DOCUMENTINDEX AND C.PARENTFOLDERINDEX = F.FOLDERINDEX  " +
+							"AND ACTIONID IN (317, 321) " +
 							"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " +
 							"AND DATETIME BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD') AND SUBSDIARYOBJECTID <> -1";
 			} else {
 				
-				sqlQuery = "SELECT SUBSDIARYOBJECTID, ACTIVEOBJECTID FROM PDBNEWAUDITTRAIL_TABLE " + 
+				sqlQuery = "SELECT C.PARENTFOLDERINDEX, F.NAME, DOCUMENTINDEX, A.SUBSDIARYOBJECTNAME, ACTIVEOBJECTNAME, ACTIONID, A.OLDVALUE FROM PDBNEWAUDITTRAIL_TABLE A, PDBDOCUMENTCONTENT C, PDBFOLDER F " + 
 							"WHERE ACTIVEOBJECTTYPE='D'  " + 
+							"AND ACTIVEOBJECTID = DOCUMENTINDEX AND C.PARENTFOLDERINDEX = F.FOLDERINDEX  " +
+							"AND ACTIONID IN (317, 321) " +
 							"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " +
 							"AND DATETIME BETWEEN CONVERT(Date, ?, 111) AND CONVERT(Date, ?, 111) AND SUBSDIARYOBJECTID <> -1";
 			}
@@ -114,30 +122,67 @@ public class SyncTabController {
 			
 			ResultSet rs = ps.executeQuery();
 			
-			Map<String, ChangedFolder> mappedChangedFolder = new HashMap<>();
+			/*Map<String, ChangedFolder> mappedChangedFolder = new HashMap<>();
 			
 			while (rs.next()) {			
 				
-				String folderID = rs.getString("SUBSDIARYOBJECTID");
+				String folderID = rs.getString("PARENTFOLDERINDEX");
+				String folderName = rs.getString("SUBSDIARYOBJECTNAME");
+				String documentIndex = rs.getString("DOCUMENTINDEX");
+				String documentName = rs.getString("ACTIVEOBJECTNAME");
+				int action = rs.getInt("ACTIONID");
+				String oldValue = rs.getString("OLDVALUE");
 				
-				changedFolder = mappedChangedFolder.get(folderID);
+				switch(action) {
+				
+				case 317:
+					changedFolder = mappedChangedFolder.get(oldValue.substring(oldValue.indexOf('=')+1).trim());
+					break;
+				case 321:
+					changedFolder = mappedChangedFolder.get(folderID);
+					break;
+				
+				}
+				
 				if(changedFolder == null) {
 					changedFolder = new ChangedFolder();
 					changedFolder.setFolderID(folderID);
-					changedFolder.getDocumentIDs().add(rs.getString("ACTIVEOBJECTID"));
+					changedFolder.setFolderName(folderName);
+					changedFolder.setDocumentName(documentName);
+					changedFolder.setAction((action==317? "Delete" : "Add"));
+					changedFolder.getDocumentActions().add( new DocumentAction(documentIndex, documentName, action) );
 					mappedChangedFolder.put(folderID, changedFolder);
 				}else {
-					changedFolder.getDocumentIDs().add(rs.getString("ACTIVEOBJECTID"));
+					changedFolder.getDocumentActions().add( new DocumentAction(documentIndex,documentName, action) );
 				}
 				
 			}
 
 			mappedChangedFolder.entrySet().stream().forEach(mapped -> {
 				ChangedFolder f = mapped.getValue();
-				f.setNumberOfDocument(f.getDocumentIDs().size());
+				f.setNumberOfDocument(f.getDocumentActions().size());
 				changedFolders.add(f);
-			});
+			});*/
 			
+			while (rs.next()) {			
+				
+				String folderID = rs.getString("PARENTFOLDERINDEX");
+				String folderName = rs.getString("SUBSDIARYOBJECTNAME");
+				String documentIndex = rs.getString("DOCUMENTINDEX");
+				String documentName = rs.getString("ACTIVEOBJECTNAME");
+				int action = rs.getInt("ACTIONID");
+				String oldValue = rs.getString("OLDVALUE");
+				
+				changedFolder = new ChangedFolder();
+				changedFolder.setFolderID(folderID);
+				changedFolder.setFolderName(folderName);
+				changedFolder.setDocumentName(documentName);
+				changedFolder.setAction((action==317? "Delete" : "Add"));
+				changedFolder.getDocumentActions().add( new DocumentAction(documentIndex, documentName, action) );
+				
+				changedFolders.add(changedFolder);
+			}
+
 			//mainController.writeDBLog(new GeneralLog(processLogID, 3, "INFO", "DATADEFINITION FETCHED UP FROM DATABASE SUCCESSFULY"));
 			
 		} catch (Exception e) {
@@ -180,17 +225,15 @@ public class SyncTabController {
 					
 					changesTable.getItems().stream().forEach(changedFolder -> {
 						try {
-							mainController.writeLog("\nSync Process For ( " + changedFolder.getFolderID() + " )");
+							mainController.writeLog("\nSync Process For ( " + changedFolder.getFolderName() + " )");
 							
-							opexModel.exportDocument(omniService, changedFolder.getFolderID(), changedFolder.getDocumentIDs());
+							opexModel.exportDocument(omniService, changedFolder.getFolderName(), changedFolder.getDocumentActions());
 							
-							mainController.writeLog("Finish Process For ( " + changedFolder.getFolderID() + " )\n" );
+							mainController.writeLog("Finish Process For ( " + changedFolder.getFolderName() + " )" );
 							
 							changedFolder.setStatus("Finish Process." );
 							
 						}catch(Exception e) {
-							
-							mainController.writeLog("Finish Process With Errors");
 							
 							changedFolder.setStatus("Finished with Errors");
 							
@@ -239,25 +282,78 @@ public class SyncTabController {
 	public void injectMainController(MainController mainController) {
 		this.mainController = mainController;
 	}
+
+	class DocumentAction{
+		String documentIndex;
+		String documentName;
+		int action;
+
+		public DocumentAction(String documentIndex, String documentName, int action) {
+			this.documentIndex = documentIndex;
+			this.documentName = documentName;
+			this.action = action;
+		}
+		public String getDocumentIndex() {
+			return documentIndex;
+		}
+
+		public void setDocumentIndex(String documentIndex) {
+			this.documentIndex = documentIndex;
+		}
+
+		public String getDocumentName() {
+			return documentName;
+		}
+
+		public void setDocumentName(String documentName) {
+			this.documentName = documentName;
+		}
+
+		public int getAction() {
+			return action;
+		}
+
+		public void setAction(int action) {
+			this.action = action;
+		}
+		
+	}
 	
 	public class ChangedFolder {
 
 		private SimpleStringProperty folderID = new SimpleStringProperty();
-		private List<String> documentIDs = new ArrayList<>();
+		private SimpleStringProperty folderName = new SimpleStringProperty();
+		private List<DocumentAction> documentActions = new ArrayList<>();
 		private SimpleIntegerProperty numberOfDocument = new SimpleIntegerProperty();
 		private SimpleStringProperty status = new SimpleStringProperty();
 		private SimpleBooleanProperty withErrors = new SimpleBooleanProperty(false);
+		private SimpleStringProperty action = new SimpleStringProperty();
+		private SimpleStringProperty documentName = new SimpleStringProperty();
 		
-/*		public ChangedFolder(String folderID, List<String> documentIDs, int numberOfDocument, String status) {
-			this.folderID = new SimpleStringProperty(folderID);
-			this.documentIDs = documentIDs;
-			this.numberOfDocument = new SimpleIntegerProperty(numberOfDocument);
-			this.status = new SimpleStringProperty(status);
+		public String getAction() {
+			return action.get();
 		}
-*/
+
+		public void setAction(String action) {
+			this.action.set(action);
+		}
+
+		public String getDocumentName() {
+			return documentName.get();
+		}
+
+		public void setDocumentName(String documentName) {
+			this.documentName.set(documentName);
+		}
+
 		public String getFolderID() {
 			return folderID.get();
 		}
+		
+		public String getFolderName() {
+			return folderName.get();
+		}
+
 
 		public int getNumberOfDocument() {
 			return numberOfDocument.get();
@@ -270,21 +366,25 @@ public class SyncTabController {
 		public void setFolderID(String folderID) {
 			this.folderID.set(folderID);
 		}
+		
+		public void setFolderName(String folderName) {
+			this.folderName.set(folderName);
+		}
 
 		public void setNumberOfDocument(int numberOfDocument) {
 			this.numberOfDocument.set(numberOfDocument);
 		}
-
+		
 		public void setStatus(String status) {
 			this.status.set(status);
 		}
 
-		public List<String> getDocumentIDs() {
-			return documentIDs;
+		public List<DocumentAction> getDocumentActions() {
+			return documentActions;
 		}
 
-		public void setDocumentIDs(List<String> documentIDs) {
-			this.documentIDs = documentIDs;
+		public void setDocumentIDs(List<DocumentAction> documentActions) {
+			this.documentActions = documentActions;
 		}
 
 		public boolean isWithErrors() {
