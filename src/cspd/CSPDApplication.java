@@ -27,13 +27,13 @@ public class CSPDApplication extends Application {
 	public void start(Stage primaryStage) {
 		try {
 			
-			FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("../opex/fx/MainContainer.fxml"));
+			FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/opex/fx/MainContainer.fxml"));
 			
 			Parent batchPanel = fxmlLoader.load();
 			
 			mainController = (MainController)fxmlLoader.getController();
 			Scene scene = new Scene(batchPanel);
-			scene.getStylesheets().add(getClass().getResource("../opex/fx/application.css").toExternalForm());
+			scene.getStylesheets().add(getClass().getResource("/opex/fx/application.css").toExternalForm());
 			
 			primaryStage.getIcons().add(new Image("/opex/fx/icon.jpg"));
 			primaryStage.setTitle("CSPD Utility");

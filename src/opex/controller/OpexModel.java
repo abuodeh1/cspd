@@ -132,7 +132,7 @@ public class OpexModel {
 			
 			mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "FOLDER NAMED " + folder.getName() + " FOUND? " + isFound));
 					
-			if( Boolean.valueOf((String)mainController.getApplicationProperties().get("omnidocs.deleteFolderIfExist")) ){
+			if( mainController.getApplicationProperties().get("omnidocs.deleteFolderIfExist").toString().equalsIgnoreCase("true") ){
 				mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "FOLDER NAMED " + folder.getName() + " FOUND? " + isFound));
 				try {
 						omniService.getFolderUtility().deleteFolder(folderRs.get(0).getFolderIndex());
@@ -144,6 +144,12 @@ public class OpexModel {
 					mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "UNABLE TO DELETE FOLDER NAMED " + folder.getName()));
 					throw new FolderException("Unable delete the (" + folder.getName() + ") from omnidocs.");
 				}
+			}else {
+				
+				mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "UNABLE TO CONTINUE WITH FOLDER " + folder.getName() + " THAT ALREADY EXISTS IN OMNIDOCS"));
+				
+				throw new FolderException("Unable to continue with " + folder.getName() + " that exists in omnidocs.");
+				
 			}
 
 		}
@@ -269,7 +275,7 @@ public class OpexModel {
 							
 							mainController.writeDBLog(new ProcessDetailsLog(processLogID, document.getDocumentName(), false));
 							
-							mainController.writeDBLog(new GeneralLog(processLogID, 2, "ERROR", "UNABLE TOT ADD DOCUMENT " + imagePath));
+							mainController.writeDBLog(new GeneralLog(processLogID, 2, "ERROR", "UNABLE TO ADD DOCUMENT " + imagePath));
 							
 							e.printStackTrace();
 							
@@ -440,7 +446,7 @@ public class OpexModel {
 					document = omniDocumentUtility.getDocument(documentAction.getDocumentIndex());
 					
 					
-					String docName = documentAction.getDocumentName()+"."+document.getCreatedByAppName();
+					String docName = documentAction.getDocumentName();//+"."+document.getCreatedByAppName();
 							
 					try {
 						
@@ -455,6 +461,8 @@ public class OpexModel {
 								mainController.writeLog("Document " +  docName + " Deleted Successfully");
 								
 								mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "DOCUMENT NAMED " +  docName + " DELETED SUCCESSFULY"));
+								
+								updateProcessDetailsLog(folderName, docName, "DELETE");
 								
 							}else {
 								
@@ -472,7 +480,8 @@ public class OpexModel {
 							String imagePath = dest + System.getProperty("file.separator") + docName ;
 							
 							omniDocumentUtility.exportDocument(imagePath, document.getDocumentIndex());
-
+							
+							updateProcessDetailsLog(folderName, docName, "ADD");
 							
 							mainController.writeLog("Document (" + docName + ") Synced Successfully");
 							
@@ -519,6 +528,25 @@ public class OpexModel {
 		}
 	}
 	
+	private void updateProcessDetailsLog(String folderName, String docName, String action) {
+		try {
+			
+			Connection connection = mainController.getSqlConnectionPoolService().get();
+			
+			PreparedStatement ps = connection.prepareStatement("UPDATE ProcessLogDetails SET UploadedToDocuWare = 0, Action = ? WHERE LogId = (SELECT LogId FROM ProcessLog WHERE LogTimestamp = (SELECT MAX(LogTimestamp) FROM ProcessLog WHERE BatchIdentifier = ?)) AND DocumentName = ?");
+			ps.setString(1, action);
+			ps.setString(2, folderName);
+			ps.setString(3, docName);
+			
+			ps.execute();
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+		} 
+	}
+
 	private String resolveInvlidFilenameChars(String filename) {
 		String resolvedFilename = filename.replace('\\', '_');
 		resolvedFilename = resolvedFilename.replace('/', '_');
