@@ -70,9 +70,9 @@ public class OpexModel {
 	
 	private void moveUploadedFile(File file) throws Exception {
 		
-		if( Boolean.valueOf((String)mainController.getApplicationProperties().get("omnidocs.transfer")) ){
+		if( Boolean.valueOf((String)mainController.getOmnidocsProperties().get("omnidocs.transfer")) ){
 			
-			String dest = (String) mainController.getApplicationProperties().get("omnidocs.transferDest");
+			String dest = (String) mainController.getOmnidocsProperties().get("omnidocs.transferDest");
 
 			try {
 				File fileDest = new File(dest + System.getProperty("file.separator") + file.getParentFile().getName() + System.getProperty("file.separator") + file.getName());
@@ -127,7 +127,7 @@ public class OpexModel {
 			
 			mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "FOLDER NAMED " + folder.getName() + " FOUND? " + isFound));
 					
-			if( mainController.getApplicationProperties().get("omnidocs.deleteFolderIfExist").toString().equalsIgnoreCase("true") ){
+			if( mainController.getOmnidocsProperties().get("omnidocs.deleteFolderIfExist").toString().equalsIgnoreCase("true") ){
 				mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "FOLDER NAMED " + folder.getName() + " FOUND? " + isFound));
 				try {
 						omniService.getFolderUtility().deleteFolder(folderRs.get(0).getFolderIndex());
@@ -197,7 +197,7 @@ public class OpexModel {
 		
 		processLogID = 
 				mainController.writeDBLog(new ProcessLog(batch.getBatchIdentifier(), batch.getBaseMachine(), batch.getStartTime(), 
-						   batch.getEndInfo().getEndTime(), folder.listFiles().length, false, false, 0, 0));
+						   batch.getEndInfo().getEndTime(), folder.listFiles().length-1, false, false, 0, 0));
 		
 		mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "OXI FILE PARSED SUCCESSFULY WITH " + batchOXI));
 		
@@ -396,11 +396,11 @@ public class OpexModel {
 							documentUtility.exportDocumentByImageIndex(uploadDocumentPath, document.getISIndex().substring(0, document.getISIndex().indexOf('#')));
 							
 							fileLog.write("\nThe document " + uploadDocumentPath + " exported successfully." );
-							mainController.getLoggerTextArea().appendText("\nThe document " + uploadDocumentPath + " exported successfully.");
+							mainController.writeLog("\nThe document " + uploadDocumentPath + " exported successfully.");
 						} catch (DocumentException e) {
 							try {
 								fileLog.write("\nUnable to upload a document called " + nextDest + System.getProperty("file.separator") + uploadDocumentPath );
-								mainController.getLoggerTextArea().appendText("\nUnable to upload a document called " + nextDest + System.getProperty("file.separator") + uploadDocumentPath);
+								mainController.writeLog("\nUnable to upload a document called " + nextDest + System.getProperty("file.separator") + uploadDocumentPath);
 							} catch (IOException e1) {
 								// TODO Auto-generated catch block
 								e1.printStackTrace();
@@ -409,7 +409,7 @@ public class OpexModel {
 						} catch (FolderException e) {
 							try {
 								fileLog.write("\nUnable to create a folder called " + nextDest );
-								mainController.getLoggerTextArea().appendText("\nUnable to create a folder called " + nextDest);
+								mainController.writeLog("\nUnable to create a folder called " + nextDest);
 							} catch (IOException e1) {
 								// TODO Auto-generated catch block
 								e1.printStackTrace();
@@ -423,7 +423,7 @@ public class OpexModel {
 				} catch (DocumentException e) {
 					try {
 						fileLog.write("Unable to get a document list" );
-						mainController.getLoggerTextArea().appendText("Unable to get a document list");
+						mainController.writeLog("Unable to get a document list");
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -433,7 +433,7 @@ public class OpexModel {
 			});
 			
 			System.out.println("exportTaskFoldersWithDocuments Task Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+ " s");
-			mainController.getLoggerTextArea().appendText("exportTaskFoldersWithDocuments Task Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+ " s");
+			mainController.writeLog("exportTaskFoldersWithDocuments Task Completed with: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate)+ " s");
 		}
 	}
 	
@@ -446,9 +446,9 @@ public class OpexModel {
 		OmniDocumentUtility omniDocumentUtility = omniService.getDocumentUtility();
 		OmniFolderUtility omniFolderUtility = omniService.getFolderUtility();
 		
-		if( Boolean.valueOf((String)mainController.getApplicationProperties().get("omnidocs.transfer")) ){
+		if( Boolean.valueOf((String)mainController.getOmnidocsProperties().get("omnidocs.transfer")) ){
 			
-			String dest = (String) mainController.getApplicationProperties().get("omnidocs.transferDest") + System.getProperty("file.separator") + folderName;
+			String dest = (String) mainController.getOmnidocsProperties().get("omnidocs.transferDest") + System.getProperty("file.separator") + folderName;
 
 				/*if(!new File(dest).exists()) {
 					
@@ -497,7 +497,7 @@ public class OpexModel {
 				
 				String folderIndex = null;
 				try {
-					folderIndex = omniFolderUtility.findFolderByName((String) mainController.getApplicationProperties().get("omnidocs.root"), folderName, false).get(0).getFolderIndex();
+					folderIndex = omniFolderUtility.findFolderByName((String) mainController.getOmnidocsProperties().get("omnidocs.root"), folderName, false).get(0).getFolderIndex();
 				} catch (FolderException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -596,15 +596,18 @@ public class OpexModel {
 
 	public DataDefinition prepareDataDefinition(OmniService omniService, int dataDefinitionType, String fileID) throws Exception {
 
-		BatchDetails batchDetails = getDataDefinitionFromDB("018/01/0000061");//fileID);
+		BatchDetails batchDetails = getDataDefinitionFromDB(fileID);
 
 		DataDefinition dataDefinition = null;
+		String dataDefinitionName = null;
 
 		try {
 			switch (dataDefinitionType) {
 	
 			case 1:
-				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("passport");
+				dataDefinitionName = (String) mainController.getOmnidocsProperties().get("omnidocs.dcPassport");
+				
+				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName(dataDefinitionName);
 				dataDefinition.getFields().get("Holder Name").setIndexValue(batchDetails.getName());
 				dataDefinition.getFields().get("Old Folder Number").setIndexValue(batchDetails.getFileNumber());
 				dataDefinition.getFields().get("New Folder Number").setIndexValue(batchDetails.getSerialNumber());
@@ -615,19 +618,25 @@ public class OpexModel {
 				break;
 	
 			case 2:
-				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("civil");
+				dataDefinitionName = (String) mainController.getOmnidocsProperties().get("omnidocs.dcCivil");
+				
+				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName(dataDefinitionName);
 				dataDefinition.getFields().get("status").setIndexValue(batchDetails.getName());
 	
 				break;
 	
 			case 3:
-				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("vital");
+				dataDefinitionName = (String) mainController.getOmnidocsProperties().get("omnidocs.dcVital");
+				
+				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName(dataDefinitionName);
 				dataDefinition.getFields().get("barcode").setIndexValue(String.valueOf(fileID));
 	
 				break;
 	
 			case 4:
-				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName("embassiess");
+				dataDefinitionName = (String) mainController.getOmnidocsProperties().get("omnidocs.dcEmbassiess");
+				
+				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName(dataDefinitionName);
 				dataDefinition.getFields().get("barcode").setIndexValue(String.valueOf(fileID));
 	
 				break;
@@ -636,9 +645,13 @@ public class OpexModel {
 	
 			}
 			
+			mainController.writeLog("Datadefinition Type " + dataDefinitionType + " prepared successfully");
+			
 			mainController.writeDBLog(new GeneralLog(processLogID, 3, "INFO", "DATADEFINITION TYPE " + dataDefinitionType + " PREPARED SUCCESSFULY"));
 			
 		}catch(DataDefinitionException dfe) {
+			
+			mainController.writeLog("Unable to prepare datadefinition type" + dataDefinitionType);
 			
 			mainController.writeDBLog(new GeneralLog(processLogID, 3, "ERROR", "UNABLE TO PREPARE DATADEFINITION TYPE " + dataDefinitionType));
 			
@@ -658,11 +671,11 @@ public class OpexModel {
 			
 			Connection connection = mainController.getSqlConnectionPoolService().get();
 			
-			PreparedStatement ps = connection.prepareStatement("SELECT * FROM BatchDetails WHERE SerialNumber = ?");
+			PreparedStatement ps = connection.prepareStatement("SELECT (Firstname + ' ' + SecondName + ' ' + FamilyName) as Name, (IndexFirstname + ' ' + IndexSecondName + ' ' + IndexFamilyName) as IndexName, * FROM BatchDetails WHERE SerialNumber = ?");
 			ps.setString(1, recordPrimaryKey);
 
 			ResultSet rs = ps.executeQuery();
-			while (rs.next()) {
+			if (rs.next()) {
 				batchDetails.setBatchId(rs.getInt("BatchId"));
 				batchDetails.setCreateDate(rs.getTimestamp("CreateDate"));
 				batchDetails.setCreatedBy(rs.getString("CreatedBy"));
@@ -674,16 +687,28 @@ public class OpexModel {
 				batchDetails.setName(rs.getString("Name"));
 				batchDetails.setSerialNumber(rs.getString("SerialNumber"));
 				batchDetails.setYear(rs.getString("Year"));
+				
+				mainController.writeLog("Metadata fetched up from database successfuly");
+				
+				mainController.writeDBLog(new GeneralLog(processLogID, 3, "INFO", "METADATA FETCHED UP FROM DATABASE SUCCESSFULY"));
+				
+			}else {
+				
+				mainController.writeDBLog(new GeneralLog(processLogID, 3, "ERROR", "UNABLE TO FETCHED UP METADATA FROM DATABASE"));
+				
+				throw new Exception();
 			}
 
-			mainController.writeDBLog(new GeneralLog(processLogID, 3, "INFO", "DATADEFINITION FETCHED UP FROM DATABASE SUCCESSFULY"));
 			
 		} catch (Exception e) {
 
-			mainController.writeDBLog(new GeneralLog(processLogID, 3, "ERROR", "UNABLE TO FETCHED UP DATADEFINITION FROM DATABASE"));
+			mainController.writeLog("Unable to fetch up data definition from database successfuly");
+			
+			mainController.writeDBLog(new GeneralLog(processLogID, 3, "ERROR", "UNABLE TO FETCH UP THE METADATA FROM DATABASE"));
 			
 			e.printStackTrace();
 
+			throw new Exception("Unable to fetch up the metadata from database successfuly");
 		} 
 		
 		System.out.println(batchDetails.toString());

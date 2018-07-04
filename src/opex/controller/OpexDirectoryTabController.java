@@ -74,7 +74,7 @@ public class OpexDirectoryTabController {
 		
 		try {
 			
-			String rootIndex = mainController.getApplicationProperties().getProperty("omnidocs.root");
+			String rootIndex = mainController.getOmnidocsProperties().getProperty("omnidocs.root");
 			if( rootIndex == null || rootIndex.trim().length() == 0 ) {
 				
 				mainController.errorAlert("Cann't continue without specifying a folder root to upload", new Exception("Please check Omnidocs in setting tab."));

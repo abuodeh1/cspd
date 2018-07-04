@@ -1,5 +1,8 @@
 package opex.controller;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,13 +18,15 @@ import cspd.core.ProcessLog;
 import etech.omni.OmniService;
 import etech.resource.pool.PoolFactory;
 import etech.resource.pool.PoolService;
-import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.HPos;
 import javafx.geometry.Pos;
+import javafx.geometry.VPos;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -31,6 +36,11 @@ import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -38,15 +48,18 @@ public class MainController {
 
 	@FXML private LoggerController loggerTabController;
 	@FXML private OpexDirectoryTabController opexDirectoryTabController;
-	@FXML private SettingTabController settingTabController;
 	@FXML private SyncTabController syncTabController;
+	
+	private OmnidocsSettingsController omnidocsSettingsController;
+	private CSPDSettingsController cSPDSettingsController;
+	
+	private Parent omnidocsSettingsPanel;
+	private Parent cspdSettingsPanel;
 	
 	private OmniService omniService;
 	
 	private PoolService<Connection> sqlConnectionPoolService;
 	private PoolService<Connection> oracleConnectionPoolService;
-	
-	private Properties props;
 	
 	@FXML public void initialize() {
 		
@@ -54,17 +67,50 @@ public class MainController {
 		
 		opexDirectoryTabController.injectMainController(this);
 		
-		settingTabController.injectMainController(this);
+		FXMLLoader omnidocsSettingsLoader = new FXMLLoader(getClass().getResource("/opex/fx/OmnidocsSettings.fxml"));
+		FXMLLoader cspdSettingsLoader = new FXMLLoader(getClass().getResource("/opex/fx/CSPDSettings.fxml"));
+		
+		try {
+			omnidocsSettingsPanel = omnidocsSettingsLoader.load();
+			omnidocsSettingsController = (OmnidocsSettingsController)omnidocsSettingsLoader.getController();
+			
+			cspdSettingsPanel = cspdSettingsLoader.load();
+			cSPDSettingsController = (CSPDSettingsController)cspdSettingsLoader.getController();
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		
+		omnidocsSettingsController.injectMainController(this);
+		
+		cSPDSettingsController.injectMainController(this);
 		
 		syncTabController.injectMainController(this);
 		
-		String url = getApplicationProperties().getProperty("db.url");
-		String user = getApplicationProperties().getProperty("db.user");
-		String password = getApplicationProperties().getProperty("db.password");
+		String url = getCSPDProperties().getProperty("db.url");
+		String user = getCSPDProperties().getProperty("db.user");
+		String password = getCSPDProperties().getProperty("db.password");
 		String driver = "net.sourceforge.jtds.jdbc.Driver";
 		
 		sqlConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
+		
+		if(sqlConnectionPoolService.get() == null) {
+			
+			errorAlert("Please revice connection settings", new Exception("The required conncetion not prepared properly"));
+		}
 
+	}
+	
+	public void buildSqlConnection() {
+		
+		String url = getCSPDProperties().getProperty("db.url");
+		String user = getCSPDProperties().getProperty("db.user");
+		String password = getCSPDProperties().getProperty("db.password");
+		String driver = "net.sourceforge.jtds.jdbc.Driver";
+		
+		sqlConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
+		
 	}
 
 	public TextArea getLoggerTextArea() {
@@ -73,9 +119,15 @@ public class MainController {
 		
 	}
 	
-	public Properties getApplicationProperties() {
+	public Properties getOmnidocsProperties() {
 		
-		return settingTabController.getApplicationProperties();
+		return omnidocsSettingsController.getApplicationProperties();
+		
+	}
+
+	public Properties getCSPDProperties() {
+		
+		return cSPDSettingsController.getApplicationProperties();
 		
 	}
 
@@ -83,11 +135,11 @@ public class MainController {
 	public OmniService getOmniService() throws Exception{
 		
 		try {
-			String host = getApplicationProperties().getProperty("omnidocs.host");
-			String port = getApplicationProperties().getProperty("omnidocs.port");
-			String cabinet = getApplicationProperties().getProperty("omnidocs.cabinet");
-			String username = getApplicationProperties().getProperty("omnidocs.omniUser");
-			String password = getApplicationProperties().getProperty("omnidocs.omniUserPassword");
+			String host = getOmnidocsProperties().getProperty("omnidocs.host");
+			String port = getOmnidocsProperties().getProperty("omnidocs.port");
+			String cabinet = getOmnidocsProperties().getProperty("omnidocs.cabinet");
+			String username = getOmnidocsProperties().getProperty("omnidocs.omniUser");
+			String password = getOmnidocsProperties().getProperty("omnidocs.omniUserPassword");
 			
 			if( (host == null || host.trim().length() == 0) && 
 					(port == null || port.trim().length() == 0) && 
@@ -120,9 +172,9 @@ public class MainController {
 
 	public PoolService<Connection> getSqlConnectionPoolService() throws Exception{
 		
-		String url = settingTabController.getApplicationProperties().getProperty("db.url");
-		String user = settingTabController.getApplicationProperties().getProperty("db.user");
-		String password = settingTabController.getApplicationProperties().getProperty("db.password");
+		String url = getCSPDProperties().getProperty("db.url");
+		String user = getCSPDProperties().getProperty("db.user");
+		String password = getCSPDProperties().getProperty("db.password");
 		String driver = "net.sourceforge.jtds.jdbc.Driver";
 		try {
 			
@@ -157,10 +209,11 @@ public class MainController {
 //		String user = "jlgccab1";//settingTabController.getApplicationProperties().getProperty("db.user");
 //		String password = "jlgccab1";//settingTabController.getApplicationProperties().getProperty("db.password");
 		
-		String url = settingTabController.getApplicationProperties().getProperty("db.omniDBUrl");
-		String user = settingTabController.getApplicationProperties().getProperty("db.omniDBUser");
-		String password = settingTabController.getApplicationProperties().getProperty("db.omniDBPassword");
-		String driver = "oracle.jdbc.driver.OracleDriver";
+		String url = getOmnidocsProperties().getProperty("db.omniDBUrl");
+		String user = getOmnidocsProperties().getProperty("db.omniDBUser");
+		String password = getOmnidocsProperties().getProperty("db.omniDBPassword");
+		String driver = url.contains("oracle")? "oracle.jdbc.driver.OracleDriver":"net.sourceforge.jtds.jdbc.Driver";
+		
 		try {
 			
 			if( (url == null || url.trim().length() == 0) && 
@@ -209,17 +262,66 @@ public class MainController {
 		
 		Stage aboutStage = new Stage();
 		
-		Scene sence = new Scene(hBox);
+//		Scene scene = new Scene(hBox);
 		
-		aboutStage.setScene(sence);
-		aboutStage.setHeight(200);
+		Scene scene = new Scene(hBox);
+		Browser browser = new Browser("report.html");
+		((Pane) scene.getRoot()).getChildren().add(browser);
+		
+		aboutStage.setScene(scene);
+		/*aboutStage.setHeight(200);
 		aboutStage.setWidth(400);
-		
+		*/
 		aboutStage.initModality(Modality.APPLICATION_MODAL);
 		aboutStage.setTitle("About Me");
 		aboutStage.setIconified(false);
 		
 		aboutStage.showAndWait();
+	}
+	
+	@FXML
+	private void handleOmnidocsSettingsMenuItem(ActionEvent event){
+		
+		try{
+			
+			Stage omnidocsSettingsStage = new Stage();
+			
+			Scene scene = new Scene(omnidocsSettingsPanel);
+			
+			omnidocsSettingsStage.setScene(scene);
+	
+			omnidocsSettingsStage.initModality(Modality.APPLICATION_MODAL);
+			omnidocsSettingsStage.setTitle("Omnidocs Settings");
+			omnidocsSettingsStage.setIconified(false);
+			
+			omnidocsSettingsStage.showAndWait();
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@FXML
+	private void handleCSPDSettingsMenuItem(ActionEvent event){
+		
+		try{
+			
+			Stage cspdSettingsStage = new Stage();
+			
+			Scene scene = new Scene(cspdSettingsPanel);
+			
+			cspdSettingsStage.setScene(scene);
+	
+			
+			cspdSettingsStage.initModality(Modality.APPLICATION_MODAL);
+			cspdSettingsStage.setTitle("Omnidocs Settings");
+			cspdSettingsStage.setIconified(false);
+			
+			cspdSettingsStage.showAndWait();
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void msgAlert(String headerText) {
@@ -362,6 +464,43 @@ public class MainController {
 		return logID;
 	}
 
+	
+	class Browser extends Region {
+		 
+	    final WebView browser = new WebView();
+	    final WebEngine webEngine = browser.getEngine();
+	     
+	    public Browser(String url) {
+	        //apply the styles
+	        getStyleClass().add("browser");
+	        // load the web page
+	        URL urlHello = getClass().getResource(url);
+	        webEngine.load(urlHello.toExternalForm());
+	        //add the web view to the scene
+	        getChildren().add(browser);
+	 
+	    }
+	    private Node createSpacer() {
+	        Region spacer = new Region();
+	        HBox.setHgrow(spacer, Priority.ALWAYS);
+	        return spacer;
+	    }
+	 
+	    @Override protected void layoutChildren() {
+	        double w = getWidth();
+	        double h = getHeight();
+	        layoutInArea(browser,0,0,w,h,0, HPos.CENTER, VPos.CENTER);
+	    }
+	 
+	    @Override protected double computePrefWidth(double height) {
+	        return 750;
+	    }
+	 
+	    @Override protected double computePrefHeight(double width) {
+	        return 500;
+	    }
+	}
+	
 }
 
 

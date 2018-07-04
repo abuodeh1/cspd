@@ -3,6 +3,7 @@ package opex.controller;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -80,6 +81,7 @@ public class SyncTabController {
 		
 		ChangedFolder changedFolder = null;
 		final List<ChangedFolder> changedFolders = new ArrayList<>();
+		Connection connection = null;
 		try {
 			
 			Calendar calendar = Calendar.getInstance();
@@ -94,20 +96,22 @@ public class SyncTabController {
 								"AND ACTIONID IN (317, 321) " + 
 								"AND DATETIME > (SELECT MAX(CREATEDDATETIME) FROM PDBFOLDER WHERE FOLDERINDEX = SUBSDIARYOBJECTID) " + 
 								"AND SUBSDIARYOBJECTID  IN (SELECT FOLDERINDEX FROM PDBFOLDER P WHERE P.PARENTFOLDERINDEX = ?) ";
-
+			
 			if(mainController.getOmniService().getCabinetUtility().getCabinetinfo().get(0).getDatabaseType().equalsIgnoreCase("oracle")){
 				
 				sqlQuery += "AND DATETIME BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD') ";
+				
+				connection = mainController.getOracleConnectionPoolService().get();
 						
 			} else {
 				
 				sqlQuery += "AND DATETIME BETWEEN CONVERT(Date, ?, 111) AND CONVERT(Date, ?, 111) ";
+				
+				connection = mainController.getSqlConnectionPoolService().get();
 			}
 			
-			Connection connection = mainController.getOracleConnectionPoolService().get();
-			
 			PreparedStatement ps = connection.prepareStatement(sqlQuery);
-			ps.setString(1, mainController.getApplicationProperties().getProperty("omnidocs.root"));
+			ps.setString(1, mainController.getOmnidocsProperties().getProperty("omnidocs.root"));
 			ps.setString(2, fromDate);
 			ps.setString(3, todayDate);
 			
@@ -127,7 +131,15 @@ public class SyncTabController {
 
 			e.printStackTrace();
 
-		} 
+		} finally {
+			
+			try {
+				connection.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		
 		return changedFolders;
 

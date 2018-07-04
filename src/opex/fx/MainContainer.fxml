@@ -39,6 +39,14 @@
 						<MenuItem mnemonicParsing="false" text="Unselect All" />
 					</items>
 				</Menu>
+				
+				<Menu mnemonicParsing="false" text="Settings">
+					<items>
+						<MenuItem mnemonicParsing="false" onAction="#handleOmnidocsSettingsMenuItem" text="Omnidocs"/>
+						<MenuItem mnemonicParsing="false" onAction="#handleCSPDSettingsMenuItem" text="CSPD" />
+					</items>
+				</Menu>
+				
 				<Menu mnemonicParsing="false" text="Help">
 					<items>
 						<MenuItem mnemonicParsing="false" onAction="#handleAboutMenuItem" text="About Etech@DMS Utility" />
@@ -65,11 +73,11 @@
 								<fx:include fx:id="loggerTab" source="LoggerTab.fxml" />
 							</content>
 						</Tab>
-                  		<Tab text="Settings">
+                  		<!-- <Tab text="Settings">
                   			<content>
 								<fx:include fx:id="settingTab" source="SettingTab.fxml" />
 							</content>
-						</Tab>						
+						</Tab> -->						
 					</tabs>
 				</TabPane>
 			</children>
