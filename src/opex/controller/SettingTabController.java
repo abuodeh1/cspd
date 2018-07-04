@@ -25,6 +25,9 @@ public class SettingTabController {
 	@FXML private TextField omniUser;
 	@FXML private TextField omniUserPassword;
 	@FXML private CheckBox deleteFolderIfExist;
+	@FXML private TextField omniDBUrl;
+	@FXML private TextField omniDBUser;
+	@FXML private TextField omniDBPassword;
 	@FXML private TextField dbUrl;
 	@FXML private TextField dbUser;
 	@FXML private TextField dbPassword;
@@ -62,6 +65,9 @@ public class SettingTabController {
 				omniUser.setText(props.getProperty("omnidocs.omniUser"));
 				omniUserPassword.setText(props.getProperty("omnidocs.omniUserPassword"));
 				deleteFolderIfExist.setSelected(Boolean.valueOf(props.getProperty("omnidocs.deleteFolderIfExist")));
+				omniDBUrl.setText(props.getProperty("db.omniDBUrl"));
+				omniDBPassword.setText(props.getProperty("db.omniDBPassword"));
+				omniDBUser.setText(props.getProperty("db.omniDBUser"));
 				dbUrl.setText(props.getProperty("db.url"));
 				dbPassword.setText(props.getProperty("db.password"));
 				dbUser.setText(props.getProperty("db.user"));
@@ -92,6 +98,9 @@ public class SettingTabController {
 			props.setProperty("omnidocs.omniUser", omniUser.getText()==null? "" : omniUser.getText());
 			props.setProperty("omnidocs.omniUserPassword", omniUserPassword.getText()==null? "" : omniUserPassword.getText());
 			props.setProperty("omnidocs.deleteFolderIfExist", String.valueOf(deleteFolderIfExist.isSelected()) );
+			props.setProperty("db.omniDBUrl", omniDBUrl.getText()==null? "" : omniDBUrl.getText());
+			props.setProperty("db.omniDBPassword", omniDBPassword.getText()==null? "" : omniDBPassword.getText());
+			props.setProperty("db.omniDBUser", omniDBUser.getText()==null? "" : omniDBUser.getText());
 			props.setProperty("db.url", dbUrl.getText()==null? "" : dbUrl.getText());
 			props.setProperty("db.password", dbPassword.getText()==null? "" : dbPassword.getText());
 			props.setProperty("db.user", dbUser.getText()==null? "" : dbUser.getText());

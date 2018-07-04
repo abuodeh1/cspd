@@ -153,9 +153,13 @@ public class MainController {
 	
 	public PoolService<Connection> getOracleConnectionPoolService() throws Exception{
 		
-		String url = "jdbc:oracle:thin:@192.168.60.93:1521:etech11g";//settingTabController.getApplicationProperties().getProperty("db.url");
-		String user = "jlgccab1";//settingTabController.getApplicationProperties().getProperty("db.user");
-		String password = "jlgccab1";//settingTabController.getApplicationProperties().getProperty("db.password");
+//		String url = "jdbc:oracle:thin:@192.168.60.93:1521:etech11g";//settingTabController.getApplicationProperties().getProperty("db.url");
+//		String user = "jlgccab1";//settingTabController.getApplicationProperties().getProperty("db.user");
+//		String password = "jlgccab1";//settingTabController.getApplicationProperties().getProperty("db.password");
+		
+		String url = settingTabController.getApplicationProperties().getProperty("db.omniDBUrl");
+		String user = settingTabController.getApplicationProperties().getProperty("db.omniDBUser");
+		String password = settingTabController.getApplicationProperties().getProperty("db.omniDBPassword");
 		String driver = "oracle.jdbc.driver.OracleDriver";
 		try {
 			
@@ -167,7 +171,7 @@ public class MainController {
 				
 			}
 			
-			sqlConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
+			oracleConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
 
 		}catch(Exception e) {
 			
@@ -177,7 +181,7 @@ public class MainController {
 
 		}
 		
-		return sqlConnectionPoolService;
+		return oracleConnectionPoolService;
 	}
 
 	public void setOracleConnectionPoolService(PoolService<Connection> oracleConnectionPoolService) {
@@ -196,7 +200,7 @@ public class MainController {
 	@FXML
 	private void handleAboutMenuItem(ActionEvent event){
 		
-		Image image = new Image(getClass().getResourceAsStream("../fx/icon.jpg"), 70, 70, true, true);
+		Image image = new Image(getClass().getResourceAsStream("/opex/fx/icon.jpg"), 70, 70, true, true);
 		Label label = new Label("Civil Status and Passport Department", new ImageView(image));
 		
 		HBox hBox = new HBox();
@@ -241,8 +245,8 @@ public class MainController {
 	}
 
 	public void writeLog(String msg) {
-		
-		Task task = new Task<Void>() {
+		getLoggerTextArea().appendText("\n" + msg);
+		/*Task task = new Task<Void>() {
 
 			@Override
 			protected Void call() throws Exception {
@@ -254,7 +258,7 @@ public class MainController {
 				return null;
 			}
 		};
-		new Thread(task).start();
+		new Thread(task).start();*/
 	}
 	
 	public int writeDBLog(Log log) {

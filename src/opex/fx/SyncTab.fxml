@@ -11,15 +11,13 @@
       <AnchorPane layoutY="37.0" prefHeight="36.0" prefWidth="616.0">
          <children>
             <Label layoutX="177.0" text="Sync for" />
-            <ComboBox fx:id="daysBefore" layoutX="238.0" layoutY="-4.0" onAction="#handleSyncBeforeComboBox" prefHeight="25.0" prefWidth="164.0" />
+            <ComboBox fx:id="daysBefore" layoutX="238.0" layoutY="-4.0" prefHeight="25.0" prefWidth="164.0" />
          </children>
       </AnchorPane>
       <TableView fx:id="changesTable" layoutX="23.0" layoutY="73.0" prefHeight="387.0" prefWidth="580.0">
         <columns>
-          <TableColumn fx:id="folder" prefWidth="172.0" text="Folder" />
-          <TableColumn fx:id="noOfDocuments" prefWidth="187.0" text="Document" />
-            <TableColumn fx:id="action" prefWidth="96.0" text="Action" />
-            <TableColumn fx:id="status" prefWidth="124.0" text="Status" />
+          <TableColumn fx:id="folder" prefWidth="231.0" text="Folder" />
+            <TableColumn fx:id="status" prefWidth="214.0" text="Status" />
         </columns>
       </TableView>
       <Button fx:id="syncButton" alignment="CENTER" layoutX="269.0" layoutY="472.0" mnemonicParsing="false" onAction="#handleSyncButton" prefHeight="25.0" prefWidth="79.0" text="Sync" />

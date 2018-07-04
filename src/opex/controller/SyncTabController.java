@@ -39,8 +39,6 @@ public class SyncTabController {
 
 	@FXML TableView<ChangedFolder> changesTable;
 	@FXML private TableColumn<ChangedFolder, String> folder;
-	@FXML private TableColumn<ChangedFolder, String> action;
-	@FXML private TableColumn<ChangedFolder, String> noOfDocuments;
 	@FXML private TableColumn<ChangedFolder, String> status;
 	
 	private List<ChangedFolder> changedFolders;
@@ -49,16 +47,12 @@ public class SyncTabController {
 	public void initialize() {
 
 		folder.setCellValueFactory(new PropertyValueFactory<>("folderName"));
-		action.setCellValueFactory(new PropertyValueFactory<>("action"));
-		noOfDocuments.setCellValueFactory(new PropertyValueFactory<>("documentName"));
 		status.setCellValueFactory(new PropertyValueFactory<>("status"));
 		folder.setStyle( "-fx-alignment: CENTER;");
-		//noOfDocuments.setStyle( "-fx-alignment: CENTER;");
-		action.setStyle( "-fx-alignment: CENTER;");
 		status.setStyle( "-fx-alignment: CENTER;");
 
 		
-		ObservableList<String> options = FXCollections.observableArrayList("2 Days Before", "4 Days Before", "7 Days Before", "14 Days Before");
+		ObservableList<String> options = FXCollections.observableArrayList("1 Days Before", "2 Days Before", "3 Days Before", "4 Days Before", "5 Days Before");
 
 		daysBefore.getItems().addAll(options);
 
@@ -94,115 +88,49 @@ public class SyncTabController {
 			calendar.add(Calendar.DAY_OF_MONTH, -(days));
 			String fromDate = new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime());
 			
-			String sqlQuery = null;
+			String sqlQuery = "SELECT DISTINCT A.SUBSDIARYOBJECTNAME FROM PDBNEWAUDITTRAIL_TABLE A, PDBDOCUMENTCONTENT C, PDBFOLDER F " + 
+								"WHERE ACTIVEOBJECTTYPE='D' AND ACTIVEOBJECTID = DOCUMENTINDEX AND C.PARENTFOLDERINDEX = F.FOLDERINDEX  " + 
+								"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " +
+								"AND ACTIONID IN (317, 321) " + 
+								"AND DATETIME > (SELECT MAX(CREATEDDATETIME) FROM PDBFOLDER WHERE FOLDERINDEX = SUBSDIARYOBJECTID) " + 
+								"AND SUBSDIARYOBJECTID  IN (SELECT FOLDERINDEX FROM PDBFOLDER P WHERE P.PARENTFOLDERINDEX = ?) ";
 
 			if(mainController.getOmniService().getCabinetUtility().getCabinetinfo().get(0).getDatabaseType().equalsIgnoreCase("oracle")){
 				
-				sqlQuery = "SELECT C.PARENTFOLDERINDEX, F.NAME, DOCUMENTINDEX, A.SUBSDIARYOBJECTNAME, ACTIVEOBJECTNAME, ACTIONID, A.OLDVALUE FROM PDBNEWAUDITTRAIL_TABLE A, PDBDOCUMENTCONTENT C, PDBFOLDER F " + 
-							"WHERE ACTIVEOBJECTTYPE='D'  " + 
-							"AND ACTIVEOBJECTID = DOCUMENTINDEX AND C.PARENTFOLDERINDEX = F.FOLDERINDEX  " +
-							"AND ACTIONID IN (317, 321) " +
-							"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " +
-							"AND DATETIME BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD') AND SUBSDIARYOBJECTID <> -1";
+				sqlQuery += "AND DATETIME BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD') ";
+						
 			} else {
 				
-				sqlQuery = "SELECT C.PARENTFOLDERINDEX, F.NAME, DOCUMENTINDEX, A.SUBSDIARYOBJECTNAME, ACTIVEOBJECTNAME, ACTIONID, A.OLDVALUE FROM PDBNEWAUDITTRAIL_TABLE A, PDBDOCUMENTCONTENT C, PDBFOLDER F " + 
-							"WHERE ACTIVEOBJECTTYPE='D'  " + 
-							"AND ACTIVEOBJECTID = DOCUMENTINDEX AND C.PARENTFOLDERINDEX = F.FOLDERINDEX  " +
-							"AND ACTIONID IN (317, 321) " +
-							"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " +
-							"AND DATETIME BETWEEN CONVERT(Date, ?, 111) AND CONVERT(Date, ?, 111) AND SUBSDIARYOBJECTID <> -1";
+				sqlQuery += "AND DATETIME BETWEEN CONVERT(Date, ?, 111) AND CONVERT(Date, ?, 111) ";
 			}
 			
 			Connection connection = mainController.getOracleConnectionPoolService().get();
 			
 			PreparedStatement ps = connection.prepareStatement(sqlQuery);
-			ps.setString(1, fromDate);
-			ps.setString(2, todayDate);
+			ps.setString(1, mainController.getApplicationProperties().getProperty("omnidocs.root"));
+			ps.setString(2, fromDate);
+			ps.setString(3, todayDate);
 			
 			ResultSet rs = ps.executeQuery();
-			
-			/*Map<String, ChangedFolder> mappedChangedFolder = new HashMap<>();
-			
-			while (rs.next()) {			
-				
-				String folderID = rs.getString("PARENTFOLDERINDEX");
-				String folderName = rs.getString("SUBSDIARYOBJECTNAME");
-				String documentIndex = rs.getString("DOCUMENTINDEX");
-				String documentName = rs.getString("ACTIVEOBJECTNAME");
-				int action = rs.getInt("ACTIONID");
-				String oldValue = rs.getString("OLDVALUE");
-				
-				switch(action) {
-				
-				case 317:
-					changedFolder = mappedChangedFolder.get(oldValue.substring(oldValue.indexOf('=')+1).trim());
-					break;
-				case 321:
-					changedFolder = mappedChangedFolder.get(folderID);
-					break;
-				
-				}
-				
-				if(changedFolder == null) {
-					changedFolder = new ChangedFolder();
-					changedFolder.setFolderID(folderID);
-					changedFolder.setFolderName(folderName);
-					changedFolder.setDocumentName(documentName);
-					changedFolder.setAction((action==317? "Delete" : "Add"));
-					changedFolder.getDocumentActions().add( new DocumentAction(documentIndex, documentName, action) );
-					mappedChangedFolder.put(folderID, changedFolder);
-				}else {
-					changedFolder.getDocumentActions().add( new DocumentAction(documentIndex,documentName, action) );
-				}
-				
-			}
 
-			mappedChangedFolder.entrySet().stream().forEach(mapped -> {
-				ChangedFolder f = mapped.getValue();
-				f.setNumberOfDocument(f.getDocumentActions().size());
-				changedFolders.add(f);
-			});*/
-			
 			while (rs.next()) {			
-				
-				String folderID = rs.getString("PARENTFOLDERINDEX");
+
 				String folderName = rs.getString("SUBSDIARYOBJECTNAME");
-				String documentIndex = rs.getString("DOCUMENTINDEX");
-				String documentName = rs.getString("ACTIVEOBJECTNAME");
-				int action = rs.getInt("ACTIONID");
-				String oldValue = rs.getString("OLDVALUE");
 				
 				changedFolder = new ChangedFolder();
-				changedFolder.setFolderID(folderID);
 				changedFolder.setFolderName(folderName);
-				changedFolder.setDocumentName(documentName);
-				changedFolder.setAction((action==317? "Delete" : "Add"));
-				changedFolder.getDocumentActions().add( new DocumentAction(documentIndex, documentName, action) );
 				
 				changedFolders.add(changedFolder);
 			}
 
-			//mainController.writeDBLog(new GeneralLog(processLogID, 3, "INFO", "DATADEFINITION FETCHED UP FROM DATABASE SUCCESSFULY"));
-			
 		} catch (Exception e) {
 
-			//mainController.writeDBLog(new GeneralLog(processLogID, 3, "ERROR", "UNABLE TO FETCHED UP DATADEFINITION FROM DATABASE"));
-			
 			e.printStackTrace();
 
 		} 
 		
 		return changedFolders;
 
-	}
-
-	@FXML
-	public void handleSyncBeforeComboBox(ActionEvent event) {
-		/*
-		 * daysBefore.setOnAction(((Event)ev) -> {
-		 * daysBefore.getSelectionModel().getSelectedItem().toString(); });
-		 */
 	}
 
 	@FXML
@@ -227,7 +155,7 @@ public class SyncTabController {
 						try {
 							mainController.writeLog("\nSync Process For ( " + changedFolder.getFolderName() + " )");
 							
-							opexModel.exportDocument(omniService, changedFolder.getFolderName(), changedFolder.getDocumentActions());
+							opexModel.exportDocument(omniService, changedFolder.getFolderName());
 							
 							mainController.writeLog("Finish Process For ( " + changedFolder.getFolderName() + " )" );
 							

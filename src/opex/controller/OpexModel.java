@@ -1,21 +1,19 @@
 package opex.controller;
 
-import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import cspd.BatchDetails;
 import cspd.core.GeneralLog;
@@ -31,7 +29,6 @@ import etech.omni.core.Folder;
 import etech.omni.helper.NGOHelper;
 import etech.omni.utils.OmniDocumentUtility;
 import etech.omni.utils.OmniFolderUtility;
-import opex.controller.SyncTabController.DocumentAction;
 import opex.element.Batch;
 import opex.element.Batch.Transaction;
 import opex.element.Batch.Transaction.Group;
@@ -64,12 +61,10 @@ public class OpexModel {
 			
 		} finally {
 		
-			if(opexFolder.listFiles().length == 1) {
+			moveUploadedFile(new File(opexFolder.getAbsolutePath() + System.getProperty("file.separator") + opexFolder.getName() + ".oxi"));
 				
-				moveUploadedFile(opexFolder.listFiles()[0]);
-				
-				opexFolder.delete();
-			}
+			opexFolder.delete();
+			
 		}
 	}
 	
@@ -136,6 +131,9 @@ public class OpexModel {
 				mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "FOLDER NAMED " + folder.getName() + " FOUND? " + isFound));
 				try {
 						omniService.getFolderUtility().deleteFolder(folderRs.get(0).getFolderIndex());
+						
+						//updateDeleteFolderFlag(folder.getName());
+						
 						mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "FOLDER NAMED " + folder.getName() + " DELETED SUCCESSFULY"));
 				
 				}catch(FolderException fe) {
@@ -154,6 +152,30 @@ public class OpexModel {
 
 		}
 
+	}
+	
+	private int updateDeleteFolderFlag(String folderName) {
+
+		try {
+			
+			Connection connection = mainController.getSqlConnectionPoolService().get();
+			
+			PreparedStatement ps = connection.prepareStatement("UPDATE ProcessLog SET UploadedToDocuWare = 0 WHERE BatchIdentifier = ? and LogTimestamp = (SELECT MAX(LogTimestamp) FROM ProcessLog WHERE BatchIdentifier = ?)");
+			ps.setString(1, folderName);
+			ps.setString(2, folderName);
+
+			ResultSet rs = ps.executeQuery();
+			if (rs.next()) {
+				return rs.getInt("LogId");
+			}
+			
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+		} 
+
+		return -1;
 	}
 	
 	private Batch readBatchOXI(File folder) throws Exception {
@@ -243,11 +265,9 @@ public class OpexModel {
 					
 						Image image = images.next();
 						
-						Document document = new Document();							
-						document.setParentFolderIndex(folderIndex);							
-						document.setDocumentName(image.getFilename());
-						
 						String imagePath = scanFolderPath + System.getProperty("file.separator") + image.getFilename();
+						Document document = new Document();
+						document.setParentFolderIndex(folderIndex);							
 						
 						try {
 							boolean additionFlag = true;
@@ -256,6 +276,9 @@ public class OpexModel {
 							}
 							
 							if(additionFlag) {
+															
+								document.setDocumentName(image.getFilename().substring(0, image.getFilename().lastIndexOf('.')));
+								
 								omniService.getDocumentUtility().addDocument(new File(imagePath), document);
 								
 								mainController.writeLog(imagePath + " uploaded successfuly.");
@@ -370,7 +393,7 @@ public class OpexModel {
 							}
 							
 							uploadDocumentPath = nextDest + System.getProperty("file.separator") + document.getDocumentName();
-							documentUtility.exportDocument(uploadDocumentPath, document.getISIndex().substring(0, document.getISIndex().indexOf('#')));
+							documentUtility.exportDocumentByImageIndex(uploadDocumentPath, document.getISIndex().substring(0, document.getISIndex().indexOf('#')));
 							
 							fileLog.write("\nThe document " + uploadDocumentPath + " exported successfully." );
 							mainController.getLoggerTextArea().appendText("\nThe document " + uploadDocumentPath + " exported successfully.");
@@ -414,90 +437,100 @@ public class OpexModel {
 		}
 	}
 	
-	public void exportDocument(OmniService omniService, String folderName, List<DocumentAction> documentActions) throws DocumentException {
+	public void exportDocument(OmniService omniService, String folderName) throws DocumentException {
 		
 		boolean withErrors = false;
 		
 		processLogID = getProcessLogIdFromDB(folderName);
 		
 		OmniDocumentUtility omniDocumentUtility = omniService.getDocumentUtility();
+		OmniFolderUtility omniFolderUtility = omniService.getFolderUtility();
 		
 		if( Boolean.valueOf((String)mainController.getApplicationProperties().get("omnidocs.transfer")) ){
 			
 			String dest = (String) mainController.getApplicationProperties().get("omnidocs.transferDest") + System.getProperty("file.separator") + folderName;
 
-				if(!new File(dest).exists()) {
+				/*if(!new File(dest).exists()) {
 					
 					mainController.writeLog("Destination folder " + dest + " does't exist to sync");
 					
 					mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "DESTINATION FOLDER " + dest + " DOEN'T EXIST TO SYNC" ));
 					
 					throw new DocumentException("Destination folder " + dest + "  does't exist to sync");
+				}*/
+				
+				File destFile = new File(dest);
+				
+				if(destFile.exists()) {
+					
+					SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+					String currentDateTime = simpleDateFormat.format(System.currentTimeMillis());
+					
+					boolean isRenamed = destFile.renameTo(new File(dest + " - " + currentDateTime));
+					
+					if(isRenamed) {
+						
+						mainController.writeLog("Destination folder " + destFile.getName() + " renamed to " + destFile.getName() + " - " + currentDateTime);
+					
+						mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "DESTINATION FOLDER " + destFile.getName() + " RENAMED TO "  + destFile.getName() + " - " + currentDateTime));
+					
+					}else{
+					
+						throw new DocumentException("Unable to rename destination folder " + destFile.getName());
+					}
+					
+				} 
+					
+				boolean isCreated = destFile.mkdir();
+				
+				if(isCreated) {
+					
+					mainController.writeLog("Destination folder " + dest + " created");
+					
+					mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "DESTINATION FOLDER " + dest + " CREATED SUCCESSFULY"));
+					
+				}else {
+					
+					throw new DocumentException("Unable to create destination folder " + dest);
 				}
 				
-				Iterator<DocumentAction> docIterator = documentActions.iterator();
+				
+				String folderIndex = null;
+				try {
+					folderIndex = omniFolderUtility.findFolderByName((String) mainController.getApplicationProperties().get("omnidocs.root"), folderName, false).get(0).getFolderIndex();
+				} catch (FolderException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				List<Document> documents = omniDocumentUtility.getDocumentList(folderIndex, false);
+				Iterator<Document> docIterator = documents.iterator();
 				
 				while(docIterator.hasNext()) {
-						
-					DocumentAction documentAction = docIterator.next();
+											
+					Document document = docIterator.next();
 					
-					Document document = null;
-					
-					document = omniDocumentUtility.getDocument(documentAction.getDocumentIndex());
-					
-					
-					String docName = documentAction.getDocumentName();//+"."+document.getCreatedByAppName();
-							
 					try {
+
+						String docName = document.getDocumentName()+"."+document.getCreatedByAppName();
+
+						String imagePath = dest + System.getProperty("file.separator") + docName ;
+						String imageIndex = document.getISIndex().substring(0, document.getISIndex().indexOf('#'));
+						omniDocumentUtility.exportDocumentByImageIndex(imagePath, imageIndex);
 						
-						switch(documentAction.getAction()){
+						//updateProcessDetailsLog(folderName, docName, "ADD");
 						
-						case 317:
-							
-							boolean isDeleted = new File(dest + System.getProperty("file.separator") + docName).delete();
-							
-							if(isDeleted) {
-								
-								mainController.writeLog("Document " +  docName + " Deleted Successfully");
-								
-								mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "DOCUMENT NAMED " +  docName + " DELETED SUCCESSFULY"));
-								
-								updateProcessDetailsLog(folderName, docName, "DELETE");
-								
-							}else {
-								
-								mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "UNABLE TO DELETE DOCUMENT NAMED " +  docName ));
-								
-								throw new Exception("Unable to delete document " +  docName );
-							}
-							
-							break;
-							
-						case 321:
-							
-							document = omniDocumentUtility.getDocument(documentAction.getDocumentIndex());
-							
-							String imagePath = dest + System.getProperty("file.separator") + docName ;
-							
-							omniDocumentUtility.exportDocument(imagePath, document.getDocumentIndex());
-							
-							updateProcessDetailsLog(folderName, docName, "ADD");
-							
-							mainController.writeLog("Document (" + docName + ") Synced Successfully");
-							
-							mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "DOCUMENT " +  docName + " SYNCED SUCCESSFULY"));
-							
-							break;
-						}
+						//mainController.writeLog("Document (" + docName + ") Synced Successfully");
 						
+						mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "DOCUMENT " +  docName + " SYNCED SUCCESSFULY"));
+
 						
 					} catch (DocumentException e) {
 						
 						withErrors = true;
 						
-						mainController.writeLog("Unable to sync a document (" +  documentAction.getDocumentName() + ")");
+						//mainController.writeLog("Unable to sync a document (" +  document.getDocumentName() + ")");
 						
-						mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "UNALBLE TO SYNC DOCUMENT " +  docName ));
+						mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "UNALBLE TO SYNC DOCUMENT " +  document.getDocumentName() ));
 						
 						e.printStackTrace();
 						
