@@ -1,13 +1,18 @@
 package opex.controller;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
@@ -36,7 +41,6 @@ import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.web.WebEngine;
@@ -93,13 +97,13 @@ public class MainController {
 		String password = getCSPDProperties().getProperty("db.password");
 		String driver = "net.sourceforge.jtds.jdbc.Driver";
 		
-		sqlConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
+		/*sqlConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
 		
 		if(sqlConnectionPoolService.get() == null) {
 			
 			errorAlert("Please revice connection settings", new Exception("The required conncetion not prepared properly"));
 		}
-
+*/
 	}
 	
 	public void buildSqlConnection() {
@@ -263,10 +267,19 @@ public class MainController {
 		Stage aboutStage = new Stage();
 		
 //		Scene scene = new Scene(hBox);
-		
-		Scene scene = new Scene(hBox);
-		Browser browser = new Browser("report.html");
-		((Pane) scene.getRoot()).getChildren().add(browser);
+		File report = null;
+		//String flName = "report"+new SimpleDateFormat("yyyyMMdd HHmmsss").format(new Date());
+		try {
+			report = File.createTempFile("report-", ".html");
+			FileWriter fileWriter = new FileWriter(report);
+			fileWriter.append("<h1>Hello MOhammad</h1>");
+			fileWriter.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Browser browser = new Browser(report.getName());
+		Scene scene = new Scene(browser, 400, 500);
 		
 		aboutStage.setScene(scene);
 		/*aboutStage.setHeight(200);
@@ -474,7 +487,16 @@ public class MainController {
 	        //apply the styles
 	        getStyleClass().add("browser");
 	        // load the web page
-	        URL urlHello = getClass().getResource(url);
+	        
+	        URL urlHello = null;
+			try {
+				
+				String path = "file://"+System.getProperty("java.io.tmpdir") + url;
+				urlHello = URI.create(path.replace("\\", "/")).toURL();
+			} catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}//getClass().getResource(url);
 	        webEngine.load(urlHello.toExternalForm());
 	        //add the web view to the scene
 	        getChildren().add(browser);
