@@ -33,6 +33,11 @@ public class CSPDSettingsController {
 	@FXML private CheckBox transfer;
 	@FXML private TextField transferDest;
 	
+	@FXML private TextField opexPassport;
+	@FXML private TextField opexCivil;
+	@FXML private TextField opexVital;
+	@FXML private TextField opexEmbassies;
+	
 	private File fileProps;
 
 	private Properties props;
@@ -56,6 +61,12 @@ public class CSPDSettingsController {
 				dbUrl.setText(props.getProperty("db.url"));
 				dbPassword.setText(props.getProperty("db.password"));
 				dbUser.setText(props.getProperty("db.user"));
+				
+				opexPassport.setText(props.getProperty("opex.passport"));
+				opexCivil.setText(props.getProperty("opex.civil"));
+				opexVital.setText(props.getProperty("opex.vital"));
+				opexEmbassies.setText(props.getProperty("opex.embassies"));
+				
 				transfer.setSelected(Boolean.valueOf(props.getProperty("omnidocs.transfer")));
 				transferDest.setText(props.getProperty("omnidocs.transferDest"));
 				
@@ -89,12 +100,26 @@ public class CSPDSettingsController {
 			props.setProperty("db.url", dbUrl.getText()==null? "" : dbUrl.getText());
 			props.setProperty("db.password", dbPassword.getText()==null? "" : dbPassword.getText());
 			props.setProperty("db.user", dbUser.getText()==null? "" : dbUser.getText());
+			
+			props.setProperty("opex.passport", opexPassport.getText()==null? "" : opexPassport.getText());
+			props.setProperty("opex.civil", opexCivil.getText()==null? "" : opexCivil.getText());
+			props.setProperty("opex.vital", opexVital.getText()==null? "" : opexVital.getText());
+			props.setProperty("opex.embassies", opexEmbassies.getText()==null? "" : opexEmbassies.getText());
+			
 			props.setProperty("omnidocs.transfer", String.valueOf(transfer.isSelected()) );
 			props.setProperty("omnidocs.transferDest", transferDest.getText()==null? "" : transferDest.getText());
 			
 			props.store(outputStream, "CSPD Properties");
 
 			outputStream.close();
+			
+			if(props.getProperty("db.url").contains("oracle")) {
+				mainController.buildOmniConnection();	
+			}else {
+				
+				mainController.buildCSPDConnection();
+			}
+			
 			
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane prefHeight="283.0" prefWidth="598.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="opex.controller.CSPDSettingsController">
+<AnchorPane prefHeight="392.0" prefWidth="598.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="opex.controller.CSPDSettingsController">
    <children>
       <GridPane hgap="10.0" layoutX="42.0" layoutY="54.0" prefHeight="125.0" prefWidth="470.0" vgap="10.0">
          <columnConstraints>
@@ -26,18 +26,27 @@
             <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
          </padding>
       </GridPane>
-      <Button fx:id="testConnection" layoutX="281.0" layoutY="232.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="104.0" text="Test Connection" />
-      <Button fx:id="saveBtn" layoutX="213.0" layoutY="233.0" mnemonicParsing="false" onAction="#handleSaveSettings" text="Save" />
-      <TextField fx:id="dbUrl" layoutX="115.0" layoutY="110.0" prefHeight="28.0" prefWidth="458.0" />
-      <Label layoutX="62.0" layoutY="116.0" text="DB Url" />
-      <Label layoutX="57.0" layoutY="79.0" text="DB User" />
-      <TextField fx:id="dbUser" layoutX="114.0" layoutY="76.0" prefHeight="28.0" prefWidth="193.0" />
-      <Label layoutX="322.0" layoutY="79.0" text="Password" />
-      <TextField fx:id="dbPassword" layoutX="379.0" layoutY="76.0" prefHeight="28.0" prefWidth="193.0" />
-      <Label layoutX="47.0" layoutY="46.0" text="CSPD Database Settings" />
-      <Button fx:id="destBtn" layoutX="445.0" layoutY="190.0" mnemonicParsing="false" onAction="#handleDestinationChooser" text="Destination" />
-      <TextField fx:id="transferDest" layoutX="121.0" layoutY="190.0" prefHeight="25.0" prefWidth="318.0" />
-      <CheckBox fx:id="transfer" ellipsisString="" layoutX="121.0" layoutY="156.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="221.0" text="Transfer folder when complete" />
+      <Button fx:id="testConnection" layoutX="281.0" layoutY="336.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="104.0" text="Test Connection" />
+      <Button fx:id="saveBtn" layoutX="213.0" layoutY="337.0" mnemonicParsing="false" onAction="#handleSaveSettings" text="Save" />
+      <TextField fx:id="dbUrl" layoutX="115.0" layoutY="97.0" prefHeight="28.0" prefWidth="458.0" />
+      <Label layoutX="62.0" layoutY="103.0" text="DB Url" />
+      <Label layoutX="57.0" layoutY="66.0" text="DB User" />
+      <TextField fx:id="dbUser" layoutX="114.0" layoutY="63.0" prefHeight="28.0" prefWidth="193.0" />
+      <Label layoutX="322.0" layoutY="66.0" text="Password" />
+      <TextField fx:id="dbPassword" layoutX="379.0" layoutY="63.0" prefHeight="28.0" prefWidth="193.0" />
+      <Label layoutX="47.0" layoutY="33.0" text="CSPD Database Settings" />
+      <Button fx:id="destBtn" layoutX="445.0" layoutY="294.0" mnemonicParsing="false" onAction="#handleDestinationChooser" text="Destination" />
+      <TextField fx:id="transferDest" layoutX="121.0" layoutY="294.0" prefHeight="25.0" prefWidth="318.0" />
+      <CheckBox fx:id="transfer" ellipsisString="" layoutX="121.0" layoutY="260.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="221.0" text="Transfer folder when complete" />
+      <TextField fx:id="opexCivil" layoutX="372.0" layoutY="180.0" prefHeight="28.0" prefWidth="193.0" />
+      <Label layoutX="315.0" layoutY="183.0" text="Civil" />
+      <TextField fx:id="opexPassport" layoutX="107.0" layoutY="180.0" prefHeight="28.0" prefWidth="193.0" />
+      <Label layoutX="50.0" layoutY="183.0" text="Passport" />
+      <Label layoutX="50.0" layoutY="217.0" text="Vital" />
+      <TextField fx:id="opexVital" layoutX="107.0" layoutY="214.0" prefHeight="28.0" prefWidth="193.0" />
+      <Label layoutX="312.0" layoutY="217.0" text="Embassies" />
+      <TextField fx:id="opexEmbassies" layoutX="372.0" layoutY="214.0" prefHeight="28.0" prefWidth="193.0" />
+      <Label layoutX="45.0" layoutY="151.0" text="Opex Folder Names" />
    </children>
 
 </AnchorPane>

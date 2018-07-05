@@ -16,7 +16,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import cspd.BatchDetails;
+import cspd.core.DocumentReport;
 import cspd.core.GeneralLog;
+import cspd.core.OpexFolderReport;
 import cspd.core.ProcessDetailsLog;
 import cspd.core.ProcessLog;
 import etech.dms.exception.DataDefinitionException;
@@ -45,11 +47,22 @@ public class OpexModel {
 		this.mainController = mainController;
 	}
 	
-	public void uploadFolder(OmniService omniService, String parentFolderID, File opexFolder) throws Exception {
+	public void uploadFolder(OpexFolderReport opexFolderReport, OmniService omniService, String parentFolderID, File opexFolder) throws Exception {
 			
 		Batch batch = readBatchOXI(opexFolder);
 		
-		DataDefinition dataDefinition = prepareDataDefinition(omniService, 1, opexFolder.getName());
+		int dfType = -1;
+		
+		if(opexFolder.getParentFile().getName().equals((String)mainController.getOmnidocsProperties().get("opex.passport")))
+			dfType = 1;
+		else if(opexFolder.getParentFile().getName().equals((String)mainController.getOmnidocsProperties().get("opex.civil")))
+			dfType = 2;
+		else if(opexFolder.getParentFile().getName().equals((String)mainController.getOmnidocsProperties().get("opex.vital")))
+			dfType = 3;
+		else if(opexFolder.getParentFile().getName().equals((String)mainController.getOmnidocsProperties().get("opex.embassies")))
+			dfType = 4;
+		
+		DataDefinition dataDefinition = prepareDataDefinition(omniService, dfType, opexFolder.getName());
 		
 		folderExistProcess(omniService, parentFolderID, opexFolder);
 		
@@ -57,7 +70,7 @@ public class OpexModel {
 
 		try {
 			
-			uploadDocumentsToOmnidocs(omniService, batch, addedFolder.getFolderIndex(), opexFolder);
+			uploadDocumentsToOmnidocs(opexFolderReport, omniService, batch, addedFolder.getFolderIndex(), opexFolder);
 			
 		} finally {
 		
@@ -229,7 +242,7 @@ public class OpexModel {
 		return addedFolder;
 	}
 	
-	private void uploadDocumentsToOmnidocs(OmniService omniService, Batch batch, String folderIndex, File physicalFolder) throws DocumentException, Exception {
+	private void uploadDocumentsToOmnidocs(OpexFolderReport opexFolderReport, OmniService omniService, Batch batch, String folderIndex, File physicalFolder) throws DocumentException, Exception {
 		
 		boolean thereIsError = false;
 		
@@ -300,13 +313,16 @@ public class OpexModel {
 							
 							mainController.writeDBLog(new GeneralLog(processLogID, 2, "ERROR", "UNABLE TO ADD DOCUMENT " + imagePath));
 							
+							opexFolderReport.setDocumentLevel(true);
+							opexFolderReport.getFailedDocuments().add(new DocumentReport(document.getDocumentName(), "Unable to add document " + imagePath));
+							
 							e.printStackTrace();
 							
 						} catch (Exception e) {
 							
 							thereIsError = true;
 							e.printStackTrace();
-						} 
+						}
 					}
 
 				}
@@ -643,6 +659,7 @@ public class OpexModel {
 	
 			default:
 	
+				throw new Exception();
 			}
 			
 			mainController.writeLog("Datadefinition Type " + dataDefinitionType + " prepared successfully");
@@ -693,8 +710,6 @@ public class OpexModel {
 				mainController.writeDBLog(new GeneralLog(processLogID, 3, "INFO", "METADATA FETCHED UP FROM DATABASE SUCCESSFULY"));
 				
 			}else {
-				
-				mainController.writeDBLog(new GeneralLog(processLogID, 3, "ERROR", "UNABLE TO FETCHED UP METADATA FROM DATABASE"));
 				
 				throw new Exception();
 			}

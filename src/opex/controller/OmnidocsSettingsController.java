@@ -82,10 +82,10 @@ public class OmnidocsSettingsController {
 				omniDBUrl.setText(props.getProperty("db.omniDBUrl"));
 				omniDBPassword.setText(props.getProperty("db.omniDBPassword"));
 				omniDBUser.setText(props.getProperty("db.omniDBUser"));
-				dcPassport.setText(props.getProperty("db.dcPassport"));
-				dcCivil.setText(props.getProperty("db.dcCivil"));
-				dcVital.setText(props.getProperty("db.dcVital"));
-				dcEmbassiess.setText(props.getProperty("db.dcEmbassiess"));
+				dcPassport.setText(props.getProperty("omnidocs.dcPassport"));
+				dcCivil.setText(props.getProperty("omnidocs.dcCivil"));
+				dcVital.setText(props.getProperty("omnidocs.dcVital"));
+				dcEmbassiess.setText(props.getProperty("omnidocs.dcEmbassiess"));
 				
 			}
 		} catch (IOException e) {
@@ -121,6 +121,8 @@ public class OmnidocsSettingsController {
 			props.store(outputStream, "Omnidocs Properties");
 
 			outputStream.close();
+			
+			mainController.buildOmniConnection();
 			
 		} catch (IOException e) {
 			e.printStackTrace();

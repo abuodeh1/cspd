@@ -1,11 +1,13 @@
 package opex.controller;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,11 +15,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
 import cspd.core.GeneralLog;
 import cspd.core.Log;
+import cspd.core.OpexFolderReport;
 import cspd.core.ProcessDetailsLog;
 import cspd.core.ProcessLog;
 import etech.omni.OmniService;
@@ -31,11 +35,13 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
+import javafx.print.PrinterJob;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
@@ -43,6 +49,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Modality;
@@ -62,8 +69,8 @@ public class MainController {
 	
 	private OmniService omniService;
 	
-	private PoolService<Connection> sqlConnectionPoolService;
-	private PoolService<Connection> oracleConnectionPoolService;
+	private PoolService<Connection> cspdConnectionPoolService;
+	private PoolService<Connection> omniConnectionPoolService;
 	
 	@FXML public void initialize() {
 		
@@ -97,24 +104,73 @@ public class MainController {
 		String password = getCSPDProperties().getProperty("db.password");
 		String driver = "net.sourceforge.jtds.jdbc.Driver";
 		
-		/*sqlConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
-		
-		if(sqlConnectionPoolService.get() == null) {
+		try {
+			
+			cspdConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
+			
+		} catch (Exception e) {
 			
 			errorAlert("Please revice connection settings", new Exception("The required conncetion not prepared properly"));
 		}
-*/
+
 	}
 	
-	public void buildSqlConnection() {
+	public void buildCSPDConnection() {
 		
 		String url = getCSPDProperties().getProperty("db.url");
 		String user = getCSPDProperties().getProperty("db.user");
 		String password = getCSPDProperties().getProperty("db.password");
-		String driver = "net.sourceforge.jtds.jdbc.Driver";
+		String driver = url.contains("oracle")? "oracle.jdbc.driver.OracleDriver":"net.sourceforge.jtds.jdbc.Driver";
 		
-		sqlConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
+		try {
+			
+			if( (url == null || url.trim().length() == 0) && 
+					(user == null || user.trim().length() == 0) && 
+							(password == null || password.trim().length() == 0) ) {
+				
+				throw new Exception ("Database Settings Problem, Please check the settings.");
+				
+			}
+			
+			cspdConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
+
+		}catch(Exception e) {
+			
+			e.printStackTrace();
+			
+			errorAlert("Please revice connection settings", new Exception("The required conncetion not prepared properly"));
+
+		}
 		
+	}
+	
+	public void buildOmniConnection() {
+		
+		String url = getOmnidocsProperties().getProperty("db.omniDBUrl");
+		String user = getOmnidocsProperties().getProperty("db.omniDBUser");
+		String password = getOmnidocsProperties().getProperty("db.omniDBPassword");
+		String driver = url.contains("oracle")? "oracle.jdbc.driver.OracleDriver":"net.sourceforge.jtds.jdbc.Driver";
+		
+		try {
+			
+			if( (url == null || url.trim().length() == 0) && 
+					(user == null || user.trim().length() == 0) && 
+							(password == null || password.trim().length() == 0) ) {
+				
+				throw new Exception ("Database Settings Problem, Please check the settings.");
+				
+			}
+			
+			omniConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
+
+		}catch(Exception e) {
+			
+			e.printStackTrace();
+			
+			errorAlert("Please revice connection settings", new Exception("The required conncetion not prepared properly"));
+
+		}
+
 	}
 
 	public TextArea getLoggerTextArea() {
@@ -190,7 +246,7 @@ public class MainController {
 				
 			}
 			
-			sqlConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
+			cspdConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
 
 		}catch(Exception e) {
 			
@@ -200,11 +256,11 @@ public class MainController {
 
 		}
 		
-		return sqlConnectionPoolService;
+		return cspdConnectionPoolService;
 	}
 
 	public void setSqlConnectionPoolService(PoolService<Connection> sqlConnectionPoolService) {
-		this.sqlConnectionPoolService = sqlConnectionPoolService;
+		this.cspdConnectionPoolService = sqlConnectionPoolService;
 	}
 	
 	public PoolService<Connection> getOracleConnectionPoolService() throws Exception{
@@ -228,7 +284,7 @@ public class MainController {
 				
 			}
 			
-			oracleConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
+			omniConnectionPoolService = PoolFactory.newSingleConnection(driver, url, user, password);
 
 		}catch(Exception e) {
 			
@@ -238,11 +294,11 @@ public class MainController {
 
 		}
 		
-		return oracleConnectionPoolService;
+		return omniConnectionPoolService;
 	}
 
 	public void setOracleConnectionPoolService(PoolService<Connection> oracleConnectionPoolService) {
-		this.oracleConnectionPoolService = oracleConnectionPoolService;
+		this.omniConnectionPoolService = oracleConnectionPoolService;
 	}
 
 	@FXML
@@ -266,25 +322,12 @@ public class MainController {
 		
 		Stage aboutStage = new Stage();
 		
-//		Scene scene = new Scene(hBox);
-		File report = null;
-		//String flName = "report"+new SimpleDateFormat("yyyyMMdd HHmmsss").format(new Date());
-		try {
-			report = File.createTempFile("report-", ".html");
-			FileWriter fileWriter = new FileWriter(report);
-			fileWriter.append("<h1>Hello MOhammad</h1>");
-			fileWriter.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		Browser browser = new Browser(report.getName());
-		Scene scene = new Scene(browser, 400, 500);
-		
+		Scene scene = new Scene(hBox);
+				
 		aboutStage.setScene(scene);
-		/*aboutStage.setHeight(200);
+		aboutStage.setHeight(200);
 		aboutStage.setWidth(400);
-		*/
+		
 		aboutStage.initModality(Modality.APPLICATION_MODAL);
 		aboutStage.setTitle("About Me");
 		aboutStage.setIconified(false);
@@ -292,49 +335,151 @@ public class MainController {
 		aboutStage.showAndWait();
 	}
 	
+	
+	public void showReport(List<OpexFolderReport> processReport) {
+
+		try {
+			final File report = File.createTempFile("report-", ".html");
+
+			final FileWriter fileWriter = new FileWriter(report);
+			
+			reportTemplateStart = reportTemplateStart.replaceAll(":title", "Process Report").replaceAll(":date", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+			fileWriter.append(reportTemplateStart);
+			
+			processReport.stream().forEach(process -> {
+				try {
+					
+					fileWriter.append("<tr class=\\\"test-result-step-row test-result-step-row-altone\\\">");
+					fileWriter.append("<td class=\\\"test-result-step-command-cell\\\">" + process.getFolderName() + "</td>");
+					fileWriter.append("<td class=\"test-result-step-description-cell\">" + process.getFailedReason() + " "  + (process.isDocumentLevel()?process.getFailedDocuments().size() + "/" + process.getTotalDocuments():"")+ "</td>");
+					fileWriter.append("</tr>");
+
+					process.getFailedDocuments().stream().forEach(doc -> {
+						try {
+							fileWriter.append("<tr class=\\\"test-result-step-row test-result-comment-row\\\">");
+							fileWriter.append("<td class=\"test-result-describe-cell\" colspan=\"3\">");
+							fileWriter.append(doc.getDocumentName() + " / " + doc.getFailedReason() + "</td>");
+							fileWriter.append("</tr>");
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					});
+					
+					
+				} catch (IOException e) {
+					
+					e.printStackTrace();
+				}
+				
+			});
+			
+			fileWriter.append(reportTemplateClose);
+			
+			fileWriter.close();
+			
+			
+			Browser browser = new Browser(report.getName());
+			
+			VBox vBox = new VBox();
+			//vBox.getChildren().add(browser);
+			
+			Button btn = new Button("Print");
+			btn.setOnAction((ActionEvent e) -> {
+			    PrinterJob job = PrinterJob.createPrinterJob();
+			    if (job != null && job.showPrintDialog(btn.getScene().getWindow())) {
+			    	browser.getWebEngine().print(job);
+			        job.endJob();
+			    }
+			});
+			
+			Button btnSave = new Button("Save");
+			btnSave.setOnAction((ActionEvent e) -> {
+				FileOutputStream fileOutputStream = null;
+			    try {
+			    	
+					Files.copy(new File(report.getAbsolutePath()).toPath(), new File("D:/temp1/" + report.getName()).toPath());
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}finally {
+					try {
+						fileOutputStream.close();
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
+			});
+			
+			vBox.getChildren().add(browser);
+			
+			HBox hBox = new HBox();
+			hBox.getChildren().add(btn);
+			hBox.getChildren().add(btnSave);
+			hBox.setAlignment(Pos.CENTER);
+			
+			vBox.getChildren().add(hBox);
+			
+			Scene scene = new Scene(vBox);
+			
+			Stage reportStage = new Stage();
+			
+			reportStage.setScene(scene);
+
+			reportStage.initModality(Modality.APPLICATION_MODAL);
+			reportStage.setTitle("Report Status");
+			reportStage.setIconified(false);
+			reportStage.setResizable(false);
+			
+			reportStage.showAndWait();
+			
+			
+		} catch (Exception e) {
+			
+			e.printStackTrace();
+		}
+		
+
+		
+		
+		
+	}
+	
 	@FXML
 	private void handleOmnidocsSettingsMenuItem(ActionEvent event){
 		
-		try{
-			
-			Stage omnidocsSettingsStage = new Stage();
-			
-			Scene scene = new Scene(omnidocsSettingsPanel);
-			
-			omnidocsSettingsStage.setScene(scene);
-	
-			omnidocsSettingsStage.initModality(Modality.APPLICATION_MODAL);
-			omnidocsSettingsStage.setTitle("Omnidocs Settings");
-			omnidocsSettingsStage.setIconified(false);
-			
-			omnidocsSettingsStage.showAndWait();
-			
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
+		Stage omnidocsSettingsStage = new Stage();
+		
+		Scene scene = new Scene(omnidocsSettingsPanel);
+		
+		omnidocsSettingsStage.setScene(scene);
+
+		omnidocsSettingsStage.initModality(Modality.APPLICATION_MODAL);
+		
+		omnidocsSettingsStage.setTitle("Omnidocs Settings");
+		
+		omnidocsSettingsStage.setIconified(false);
+		
+		omnidocsSettingsStage.show();
+
 	}
 	
 	@FXML
 	private void handleCSPDSettingsMenuItem(ActionEvent event){
 		
-		try{
-			
-			Stage cspdSettingsStage = new Stage();
-			
-			Scene scene = new Scene(cspdSettingsPanel);
-			
-			cspdSettingsStage.setScene(scene);
-	
-			
-			cspdSettingsStage.initModality(Modality.APPLICATION_MODAL);
-			cspdSettingsStage.setTitle("Omnidocs Settings");
-			cspdSettingsStage.setIconified(false);
-			
-			cspdSettingsStage.showAndWait();
-			
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
+		Stage cspdSettingsStage = new Stage();
+		
+		Scene scene = new Scene(cspdSettingsPanel);
+		
+		cspdSettingsStage.setScene(scene);
+		
+		cspdSettingsStage.initModality(Modality.APPLICATION_MODAL);
+		cspdSettingsStage.setTitle("Omnidocs Settings");
+		cspdSettingsStage.setIconified(false);
+		
+		cspdSettingsStage.showAndWait();
+
 	}
 	
 	public void msgAlert(String headerText) {
@@ -378,7 +523,7 @@ public class MainController {
 	
 	public int writeDBLog(Log log) {
 		
-		Connection connection = sqlConnectionPoolService.get();
+		Connection connection = cspdConnectionPoolService.get();
 		
 		int logID = 0;
 		
@@ -477,52 +622,125 @@ public class MainController {
 		return logID;
 	}
 
-	
 	class Browser extends Region {
-		 
-	    final WebView browser = new WebView();
-	    final WebEngine webEngine = browser.getEngine();
-	     
-	    public Browser(String url) {
-	        //apply the styles
-	        getStyleClass().add("browser");
-	        // load the web page
-	        
-	        URL urlHello = null;
+
+		final WebView webView = new WebView();
+		final WebEngine webEngine = webView.getEngine();
+
+		public Browser() {}
+		
+		public Browser(String url) {
+			
+			getStyleClass().add("browser");
+
+			URL urlHello = null;
 			try {
+
+				String path = "file:///" + System.getProperty("java.io.tmpdir")  + url;
 				
-				String path = "file://"+System.getProperty("java.io.tmpdir") + url;
 				urlHello = URI.create(path.replace("\\", "/")).toURL();
+				
 			} catch (MalformedURLException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}//getClass().getResource(url);
-	        webEngine.load(urlHello.toExternalForm());
-	        //add the web view to the scene
-	        getChildren().add(browser);
-	 
-	    }
-	    private Node createSpacer() {
-	        Region spacer = new Region();
-	        HBox.setHgrow(spacer, Priority.ALWAYS);
-	        return spacer;
-	    }
-	 
-	    @Override protected void layoutChildren() {
-	        double w = getWidth();
-	        double h = getHeight();
-	        layoutInArea(browser,0,0,w,h,0, HPos.CENTER, VPos.CENTER);
-	    }
-	 
-	    @Override protected double computePrefWidth(double height) {
-	        return 750;
-	    }
-	 
-	    @Override protected double computePrefHeight(double width) {
-	        return 500;
-	    }
+			} // getClass().getResource(url);
+			
+			//urlHello = getClass().getResource(url);
+			
+			webEngine.load(urlHello.toExternalForm());
+			
+			getChildren().add(webView);
+
+		}
+
+		public WebEngine getWebEngine() {
+			return webEngine;
+		}
+
+		private Node createSpacer() {
+			Region spacer = new Region();
+			HBox.setHgrow(spacer, Priority.ALWAYS);
+			return spacer;
+		}
+
+		@Override
+		protected void layoutChildren() {
+			double w = getWidth();
+			double h = getHeight();
+			layoutInArea(webView, 0, 0, w, h, 0, HPos.CENTER, VPos.CENTER);
+		}
+
+		@Override
+		protected double computePrefWidth(double height) {
+			return 750;
+		}
+
+		@Override
+		protected double computePrefHeight(double width) {
+			return 500;
+		}
 	}
 	
+	String reportTemplateStart = "<html>\r\n" + 
+			"    <head>\r\n" + 
+			"        <title>\r\n" + 
+			"            :title\r\n" + 
+			"        </title>\r\n" + 
+			"        <style type=\"text/css\">\r\n" + 
+			"            .test-result-table {\r\n" + 
+			"                border: 1px solid black;\r\n" + 
+			"                width: 100%;\r\n" + 
+			"            }\r\n" + 
+			"            .test-result-table-header-cell {\r\n" + 
+			"\r\n" + 
+			"                border-bottom: 1px solid black;\r\n" + 
+			"                background-color: silver;\r\n" + 
+			"            }\r\n" + 
+			"            .test-result-step-command-cell {\r\n" + 
+			"\r\n" + 
+			"                border-bottom: 1px solid gray;\r\n" + 
+			"            }\r\n" + 
+			"            .test-result-step-description-cell {\r\n" + 
+			"\r\n" + 
+			"                border-bottom: 1px solid gray;\r\n" + 
+			"            }\r\n" + 
+			"            .test-result-describe-cell {\r\n" + 
+			"                background-color: tan;\r\n" + 
+			"                font-style: italic;\r\n" + 
+			"            }\r\n" + 
+			"        </style>\r\n" + 
+			"    </head>\r\n" + 
+			"    <body dir=\"ltr\" >\r\n" + 
+			"        <h2 style=\"position: relative; left:40%;\">:title</h2>\r\n" + 
+			"\r\n" + 
+			"        <table>\r\n" + 
+			"            <tr>\r\n" + 
+			"                <td>\r\n" + 
+			"                    <h3>Date:</h3>\r\n" + 
+			"                </td>\r\n" + 
+			"                <td>\r\n" + 
+			"                    <h3>:date</h3>\r\n" + 
+			"                </td>\r\n" + 
+			"            </tr>\r\n" + 
+			"        </table>\r\n" + 
+			"\r\n" + 
+			"       <table class=\"test-result-table\" cellspacing=\"0\">\r\n" + 
+			"            <thead>\r\n" + 
+			"                <tr>\r\n" + 
+			"                    <td class=\"test-result-table-header-cell\">\r\n" + 
+			"                        Folder\r\n" + 
+			"                    </td>\r\n" + 
+			"                    <td class=\"test-result-table-header-cell\">\r\n" + 
+			"                        Error Description\r\n" + 
+			"                    </td>\r\n" + 
+			"                </tr>\r\n" + 
+			"            </thead>\r\n" + 
+			"            <tbody>"; 
+			
+	
+	String reportTemplateClose = "	            </tbody>\r\n" + 
+									"	        </table>\r\n" + 
+									"	   </body>\r\n" + 
+									"	</html>";
 }
 
 

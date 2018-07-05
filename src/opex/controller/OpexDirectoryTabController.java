@@ -2,7 +2,10 @@ package opex.controller;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.ArrayList;
+import java.util.List;
 
+import cspd.core.OpexFolderReport;
 import etech.omni.OmniService;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -86,24 +89,39 @@ public class OpexDirectoryTabController {
 			
 			OpexModel opexModel = new OpexModel(mainController);
 			
+			List<OpexFolderReport> opexFolderReports = new ArrayList<>();
+
 			Task<Void> task = new Task<Void>() {
 				
 				@Override
 				protected Void call() throws Exception {
 					
 					uploadToOmnidocsButton.setDisable(true);
-					
 					opexTable.getItems().stream().forEach(opexFolder -> {
+						
+						OpexFolderReport opexFolderReport = new OpexFolderReport();
+						
+						File folder = new File(opexFolder.getFolderPath());
+						
+						opexFolderReport.setTotalDocuments(folder.listFiles().length-1);
+						
+						
 						try {
 							mainController.writeLog("\nStart Upload Process For ( " + opexFolder.getFolderID() + " )");
 							
-							opexModel.uploadFolder(omniService, rootIndex, new File(opexFolder.getFolderPath()));
+							opexModel.uploadFolder(opexFolderReport, omniService, rootIndex, folder);
 							
 							mainController.writeLog("Finish Process For ( " + opexFolder.getFolderID() + " )\n" );
 							
 							opexFolder.setStatus("Finish Process." );
 							
 						}catch(Exception e) {
+							
+							opexFolderReport.setFolderName(opexFolder.getFolderID());
+							
+							opexFolderReport.setFailedReason(e.getMessage());
+							
+							opexFolderReports.add(opexFolderReport);
 							
 							mainController.writeLog("Finish Process With Errors");
 							
@@ -129,6 +147,7 @@ public class OpexDirectoryTabController {
 			
 			Thread taskThread = new Thread(task);
 			taskThread.start();
+			taskThread.join();
 			
 			task.setOnSucceeded(e -> {
 				mainController.msgAlert("The upload task completed.");
@@ -141,6 +160,8 @@ public class OpexDirectoryTabController {
 
 			//opexModel.exportTaskWithSubfolder(omniService, "108", "D:\\temp1");
 		    
+			mainController.showReport(opexFolderReports);
+			
 		} catch (Exception e) {
 
 			mainController.errorAlert("Error Communication ...", e);
