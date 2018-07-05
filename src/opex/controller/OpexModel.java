@@ -204,15 +204,15 @@ public class OpexModel {
 
 		}catch(Exception fe) {
 			mainController.writeLog("Unable to parse " + batchOXI);
-			mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "UNABLE TO PARSE OXI FILE " + batchOXI));
-			throw new Exception(fe);
+			mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "UNABLE TO PARSE OXI FILE " + folder.getName() + ".oxi"));
+			throw new Exception("Unable to parse oxi file " + folder.getName() + ".oxi");
 		}
 		
 		processLogID = 
 				mainController.writeDBLog(new ProcessLog(batch.getBatchIdentifier(), batch.getBaseMachine(), batch.getStartTime(), 
 						   batch.getEndInfo().getEndTime(), folder.listFiles().length-1, false, false, 0, 0));
 		
-		mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "OXI FILE PARSED SUCCESSFULY WITH " + batchOXI));
+		mainController.writeDBLog(new GeneralLog(processLogID, 1, "INFO", "OXI FILE PARSED SUCCESSFULY WITH " + folder.getName() + ".oxi"));
 		
 		
 		return batch;
@@ -298,7 +298,7 @@ public class OpexModel {
 								
 								mainController.writeDBLog(new ProcessDetailsLog(processLogID, document.getDocumentName(), true));
 						
-								mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "DOCUMENT ADDED SUCCESSFULLY WITH " + imagePath));
+								mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO", "DOCUMENT ADDED SUCCESSFULLY WITH " + physicalFolder.getName() + "/" + image.getFilename()));
 								
 								moveUploadedFile(new File(imagePath));
 
@@ -314,7 +314,8 @@ public class OpexModel {
 							mainController.writeDBLog(new GeneralLog(processLogID, 2, "ERROR", "UNABLE TO ADD DOCUMENT " + imagePath));
 							
 							opexFolderReport.setDocumentLevel(true);
-							opexFolderReport.getFailedDocuments().add(new DocumentReport(document.getDocumentName(), "Unable to add document " + imagePath));
+							
+							opexFolderReport.getFailedDocuments().add(new DocumentReport(document.getDocumentName(), "Unable to add document " + image.getFilename()));
 							
 							e.printStackTrace();
 							
@@ -627,8 +628,8 @@ public class OpexModel {
 				dataDefinition.getFields().get("Holder Name").setIndexValue(batchDetails.getName());
 				dataDefinition.getFields().get("Old Folder Number").setIndexValue(batchDetails.getFileNumber());
 				dataDefinition.getFields().get("New Folder Number").setIndexValue(batchDetails.getSerialNumber());
-				//dataDefinition.getFields().get("Office Name").setIndexValue(batchDetails.getSerialNumber().substring(batchDetails.getSerialNumber().lastIndexOf('_') + 1));
-				//dataDefinition.getFields().get("Document Type").setIndexValue(batchDetails.getSerialNumber().substring(batchDetails.getSerialNumber().indexOf('_') + 1, batchDetails.getSerialNumber().lastIndexOf('_')));
+				dataDefinition.getFields().get("Office Name").setIndexValue(batchDetails.getSerialNumber().substring(batchDetails.getSerialNumber().lastIndexOf('_') + 1));
+				dataDefinition.getFields().get("Document Type").setIndexValue(batchDetails.getSerialNumber().substring(batchDetails.getSerialNumber().indexOf('_') + 1, batchDetails.getSerialNumber().lastIndexOf('_')));
 				dataDefinition.getFields().get("Year").setIndexValue(batchDetails.getYear());
 	
 				break;

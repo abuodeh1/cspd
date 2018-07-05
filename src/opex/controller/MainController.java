@@ -358,7 +358,7 @@ public class MainController {
 						try {
 							fileWriter.append("<tr class=\\\"test-result-step-row test-result-comment-row\\\">");
 							fileWriter.append("<td class=\"test-result-describe-cell\" colspan=\"3\">");
-							fileWriter.append(doc.getDocumentName() + " / " + doc.getFailedReason() + "</td>");
+							fileWriter.append(doc.getFailedReason() + "</td>");
 							fileWriter.append("</tr>");
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
