@@ -84,12 +84,6 @@ public class SyncTabController {
 		Connection connection = null;
 		try {
 			
-			Calendar calendar = Calendar.getInstance();
-			calendar.add(Calendar.DAY_OF_MONTH, 1);
-			String todayDate = new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime());
-			calendar.add(Calendar.DAY_OF_MONTH, -(days));
-			String fromDate = new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime());
-			
 			String sqlQuery = "SELECT DISTINCT A.SUBSDIARYOBJECTNAME FROM PDBNEWAUDITTRAIL_TABLE A, PDBDOCUMENTCONTENT C, PDBFOLDER F " + 
 								"WHERE ACTIVEOBJECTTYPE='D' AND ACTIVEOBJECTID = DOCUMENTINDEX AND C.PARENTFOLDERINDEX = F.FOLDERINDEX  " + 
 								"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " +
@@ -109,6 +103,13 @@ public class SyncTabController {
 				
 				connection = mainController.getSqlConnectionPoolService().get();
 			}
+			
+			Calendar calendar = Calendar.getInstance();
+			calendar.add(Calendar.DAY_OF_MONTH, 1);
+			String todayDate = new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime());
+			calendar.add(Calendar.DAY_OF_MONTH, -(days));
+			String fromDate = new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime());
+			
 			
 			PreparedStatement ps = connection.prepareStatement(sqlQuery);
 			ps.setString(1, mainController.getOmnidocsProperties().getProperty("omnidocs.root"));
@@ -167,7 +168,7 @@ public class SyncTabController {
 						try {
 							mainController.writeLog("\nSync Process For ( " + changedFolder.getFolderName() + " )");
 							
-							opexModel.exportDocument(omniService, changedFolder.getFolderName());
+							opexModel.syncFolder(omniService, changedFolder.getFolderName());
 							
 							mainController.writeLog("Finish Process For ( " + changedFolder.getFolderName() + " )" );
 							

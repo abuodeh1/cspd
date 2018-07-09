@@ -51,16 +51,16 @@ public class OpexModel {
 			
 		Batch batch = readBatchOXI(opexFolder);
 		
-		int dfType = -1;
+		int dfType = Integer.valueOf( opexFolder.getName().substring(opexFolder.getName().indexOf("+"), opexFolder.getName().lastIndexOf("+")) );
 		
-		if(opexFolder.getParentFile().getName().equals((String)mainController.getOmnidocsProperties().get("opex.passport")))
+/*		if(opexFolder.getName().equals((String)mainController.getOmnidocsProperties().get("opex.passport")))
 			dfType = 1;
-		else if(opexFolder.getParentFile().getName().equals((String)mainController.getOmnidocsProperties().get("opex.civil")))
+		else if(opexFolder.getParentFile().getParentFile().getName().equals((String)mainController.getOmnidocsProperties().get("opex.civil")))
 			dfType = 2;
-		else if(opexFolder.getParentFile().getName().equals((String)mainController.getOmnidocsProperties().get("opex.vital")))
+		else if(opexFolder.getParentFile().getParentFile().getName().equals((String)mainController.getOmnidocsProperties().get("opex.vital")))
 			dfType = 3;
-		else if(opexFolder.getParentFile().getName().equals((String)mainController.getOmnidocsProperties().get("opex.embassies")))
-			dfType = 4;
+		else if(opexFolder.getParentFile().getParentFile().getName().equals((String)mainController.getOmnidocsProperties().get("opex.embassies")))
+			dfType = 4;*/
 		
 		DataDefinition dataDefinition = prepareDataDefinition(omniService, dfType, opexFolder.getName());
 		
@@ -454,7 +454,7 @@ public class OpexModel {
 		}
 	}
 	
-	public void exportDocument(OmniService omniService, String folderName) throws DocumentException {
+	public void syncFolder(OmniService omniService, String folderName) throws DocumentException {
 		
 		boolean withErrors = false;
 		
@@ -467,15 +467,6 @@ public class OpexModel {
 			
 			String dest = (String) mainController.getOmnidocsProperties().get("omnidocs.transferDest") + System.getProperty("file.separator") + folderName;
 
-				/*if(!new File(dest).exists()) {
-					
-					mainController.writeLog("Destination folder " + dest + " does't exist to sync");
-					
-					mainController.writeDBLog(new GeneralLog(processLogID, 1, "ERROR", "DESTINATION FOLDER " + dest + " DOEN'T EXIST TO SYNC" ));
-					
-					throw new DocumentException("Destination folder " + dest + "  does't exist to sync");
-				}*/
-				
 				File destFile = new File(dest);
 				
 				if(destFile.exists()) {
@@ -516,7 +507,6 @@ public class OpexModel {
 				try {
 					folderIndex = omniFolderUtility.findFolderByName((String) mainController.getOmnidocsProperties().get("omnidocs.root"), folderName, false).get(0).getFolderIndex();
 				} catch (FolderException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 				List<Document> documents = omniDocumentUtility.getDocumentList(folderIndex, false);
@@ -564,6 +554,7 @@ public class OpexModel {
 					
 				}
 				
+				updateUploadedToDocuWare(folderName);
 				
 				if(withErrors) {
 					
@@ -578,6 +569,24 @@ public class OpexModel {
 		}
 	}
 	
+	private void updateUploadedToDocuWare(String folderName) {
+		try {
+			
+			Connection connection = mainController.getSqlConnectionPoolService().get();
+			
+			PreparedStatement ps = connection.prepareStatement("UPDATE ProcessLog SET UploadedToDocuWare = 2 WHERE LogId = (SELECT LogId FROM ProcessLog WHERE LogTimestamp = (SELECT MAX(LogTimestamp) FROM ProcessLog WHERE BatchIdentifier = ?))");
+			ps.setString(1, folderName);
+			
+			ps.execute();
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+		} 
+		
+	}
+
 	private void updateProcessDetailsLog(String folderName, String docName, String action) {
 		try {
 			
@@ -613,7 +622,7 @@ public class OpexModel {
 
 	public DataDefinition prepareDataDefinition(OmniService omniService, int dataDefinitionType, String fileID) throws Exception {
 
-		BatchDetails batchDetails = getDataDefinitionFromDB(fileID);
+		BatchDetails batchDetails = getDataDefinitionFromDB(fileID.replaceAll("_", "/"));
 
 		DataDefinition dataDefinition = null;
 		String dataDefinitionName = null;
@@ -624,12 +633,14 @@ public class OpexModel {
 			case 1:
 				dataDefinitionName = (String) mainController.getOmnidocsProperties().get("omnidocs.dcPassport");
 				
+				String serialNumber = batchDetails.getSerialNumber();
+				
 				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName(dataDefinitionName);
 				dataDefinition.getFields().get("Holder Name").setIndexValue(batchDetails.getName());
 				dataDefinition.getFields().get("Old Folder Number").setIndexValue(batchDetails.getFileNumber());
 				dataDefinition.getFields().get("New Folder Number").setIndexValue(batchDetails.getSerialNumber());
-				dataDefinition.getFields().get("Office Name").setIndexValue(batchDetails.getSerialNumber().substring(batchDetails.getSerialNumber().lastIndexOf('_') + 1));
-				dataDefinition.getFields().get("Document Type").setIndexValue(batchDetails.getSerialNumber().substring(batchDetails.getSerialNumber().indexOf('_') + 1, batchDetails.getSerialNumber().lastIndexOf('_')));
+				dataDefinition.getFields().get("Office Name").setIndexValue(batchDetails.getOfficeCode());
+				dataDefinition.getFields().get("Document Type").setIndexValue(batchDetails.getFileType());
 				dataDefinition.getFields().get("Year").setIndexValue(batchDetails.getYear());
 	
 				break;
@@ -689,8 +700,9 @@ public class OpexModel {
 			
 			Connection connection = mainController.getSqlConnectionPoolService().get();
 			
-			PreparedStatement ps = connection.prepareStatement("SELECT (Firstname + ' ' + SecondName + ' ' + FamilyName) as Name, (IndexFirstname + ' ' + IndexSecondName + ' ' + IndexFamilyName) as IndexName, * FROM BatchDetails WHERE SerialNumber = ?");
-			ps.setString(1, recordPrimaryKey);
+			PreparedStatement ps = connection.prepareStatement("SELECT (Firstname + ' ' + SecondName + ' ' + FamilyName) as Name, FileNumber, SerialNumber, b.OfficeCode, b.FileType, Year, *  FROM BatchDetails bd, Batches b where bd.BatchId = b.Id AND SerialNumber = ? AND Part = ?");
+			ps.setString(1, recordPrimaryKey.substring(recordPrimaryKey.indexOf("%")+1));
+			ps.setString(2, recordPrimaryKey.substring(0, recordPrimaryKey.indexOf("%")));
 
 			ResultSet rs = ps.executeQuery();
 			if (rs.next()) {
@@ -701,10 +713,11 @@ public class OpexModel {
 				batchDetails.setFileStatus(rs.getInt("FileStatus"));
 				batchDetails.setId(rs.getInt("Id"));
 				batchDetails.setIndexFileNumber(rs.getString("IndexFileNumber"));
-				batchDetails.setIndexName(rs.getString("IndexName"));
 				batchDetails.setName(rs.getString("Name"));
 				batchDetails.setSerialNumber(rs.getString("SerialNumber"));
 				batchDetails.setYear(rs.getString("Year"));
+				batchDetails.setFileType(rs.getString("FileType"));
+				batchDetails.setOfficeCode(rs.getString("OfficeCode"));
 				
 				mainController.writeLog("Metadata fetched up from database successfuly");
 				

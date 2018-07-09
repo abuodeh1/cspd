@@ -25,6 +25,10 @@ public class BatchDetails {
 	private String createdBy;
 	
 	private Timestamp createDate;
+	
+	private String officeCode;
+
+	private String fileType;
 
 	public int getId() {
 		return id;
@@ -122,6 +126,23 @@ public class BatchDetails {
 				+ createDate + "]";
 	}
 
+	public String getOfficeCode() {
+		return officeCode;
+	}
+
+	public void setOfficeCode(String officeCode) {
+		this.officeCode = officeCode;
+	}
+
+	public String getFileType() {
+		return fileType;
+	}
+
+	public void setFileType(String fileType) {
+		this.fileType = fileType;
+	}
+
+	
 		
 	
 }
