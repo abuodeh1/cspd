@@ -84,22 +84,61 @@ public class SyncTabController {
 		Connection connection = null;
 		try {
 			
-			String sqlQuery = "SELECT DISTINCT A.SUBSDIARYOBJECTNAME FROM PDBNEWAUDITTRAIL_TABLE A, PDBDOCUMENTCONTENT C, PDBFOLDER F " + 
+			/*String sqlQuery = "SELECT DISTINCT A.SUBSDIARYOBJECTNAME FROM PDBNEWAUDITTRAIL_TABLE A, PDBDOCUMENTCONTENT C, PDBFOLDER F " + 
 								"WHERE ACTIVEOBJECTTYPE='D' AND ACTIVEOBJECTID = DOCUMENTINDEX AND C.PARENTFOLDERINDEX = F.FOLDERINDEX  " + 
 								"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " +
 								"AND ACTIONID IN (317, 321) " + 
 								"AND DATETIME > (SELECT MAX(CREATEDDATETIME) FROM PDBFOLDER WHERE FOLDERINDEX = SUBSDIARYOBJECTID) " + 
 								"AND SUBSDIARYOBJECTID  IN (SELECT FOLDERINDEX FROM PDBFOLDER P WHERE P.PARENTFOLDERINDEX = ?) ";
+			*/
 			
+			String sqlQuery = null;
+			
+			String sqlQueryOracle = "SELECT DISTINCT SUBSDIARYOBJECTNAME AS NAME FROM PDBNEWAUDITTRAIL_TABLE A, PDBDOCUMENTCONTENT C, PDBFOLDER F " + 
+									"WHERE ACTIVEOBJECTTYPE = 'D' " + 
+									"AND ACTIVEOBJECTID = DOCUMENTINDEX " + 
+									"AND C.PARENTFOLDERINDEX = F.FOLDERINDEX " + 
+									"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " + 
+									"AND ACTIONID IN (317, 321) " + 
+									"AND DATETIME BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD') " + 
+									"AND DATETIME > (SELECT MAX(CREATEDDATETIME) FROM PDBFOLDER WHERE FOLDERINDEX = SUBSDIARYOBJECTID) " + 
+									"AND SUBSDIARYOBJECTID  IN (SELECT FOLDERINDEX FROM PDBFOLDER P WHERE P.PARENTFOLDERINDEX = ?) " + 
+									"UNION " + 
+									"SELECT DISTINCT NAME FROM JLGCCAB1.PDBNEWAUDITTRAIL_TABLE, PDBFOLDER F " + 
+									"WHERE ACTIVEOBJECTID = FOLDERINDEX " + 
+									"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " + 
+									"AND ACTIONID IN (317, 321, 204) " + 
+									"AND DATETIME BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD') " + 
+									"AND DATETIME > (SELECT MAX(CREATEDDATETIME) FROM PDBFOLDER WHERE FOLDERINDEX = ACTIVEOBJECTID) " + 
+									"AND ACTIVEOBJECTNAME IN (SELECT NAME FROM PDBFOLDER WHERE PARENTFOLDERINDEX = ?)";
+			
+			String sqlQuerySQLSrv = "SELECT DISTINCT SUBSDIARYOBJECTNAME AS NAME FROM PDBNEWAUDITTRAIL_TABLE A, PDBDOCUMENTCONTENT C, PDBFOLDER F " + 
+									"WHERE ACTIVEOBJECTTYPE = 'D' " + 
+									"AND ACTIVEOBJECTID = DOCUMENTINDEX " + 
+									"AND C.PARENTFOLDERINDEX = F.FOLDERINDEX " + 
+									"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " + 
+									"AND ACTIONID IN (317, 321) " + 
+									"AND DATETIME BETWEEN CONVERT(Date, ?, 111) AND CONVERT(Date, ?, 111) " + 
+									"AND DATETIME > (SELECT MAX(CREATEDDATETIME) FROM PDBFOLDER WHERE FOLDERINDEX = SUBSDIARYOBJECTID) " + 
+									"AND SUBSDIARYOBJECTID  IN (SELECT FOLDERINDEX FROM PDBFOLDER P WHERE P.PARENTFOLDERINDEX = ?) " + 
+									"UNION " + 
+									"SELECT DISTINCT NAME FROM JLGCCAB1.PDBNEWAUDITTRAIL_TABLE, PDBFOLDER F " + 
+									"WHERE ACTIVEOBJECTID = FOLDERINDEX " + 
+									"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " + 
+									"AND ACTIONID IN (317, 321, 204) " + 
+									"AND DATETIME BETWEEN CONVERT(Date, ?, 111) AND CONVERT(Date, ?, 111) " + 
+									"AND DATETIME > (SELECT MAX(CREATEDDATETIME) FROM PDBFOLDER WHERE FOLDERINDEX = ACTIVEOBJECTID) " + 
+									"AND ACTIVEOBJECTNAME IN (SELECT NAME FROM PDBFOLDER WHERE PARENTFOLDERINDEX = ?)";
+							
 			if(mainController.getOmniService().getCabinetUtility().getCabinetinfo().get(0).getDatabaseType().equalsIgnoreCase("oracle")){
 				
-				sqlQuery += "AND DATETIME BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD') ";
+				sqlQuery = sqlQueryOracle;
 				
 				connection = mainController.getOracleConnectionPoolService().get();
 						
 			} else {
 				
-				sqlQuery += "AND DATETIME BETWEEN CONVERT(Date, ?, 111) AND CONVERT(Date, ?, 111) ";
+				sqlQuery = sqlQuerySQLSrv;
 				
 				connection = mainController.getSqlConnectionPoolService().get();
 			}
@@ -112,15 +151,18 @@ public class SyncTabController {
 			
 			
 			PreparedStatement ps = connection.prepareStatement(sqlQuery);
-			ps.setString(1, mainController.getOmnidocsProperties().getProperty("omnidocs.root"));
-			ps.setString(2, fromDate);
-			ps.setString(3, todayDate);
+			ps.setString(1, fromDate);
+			ps.setString(2, todayDate);
+			ps.setString(3, mainController.getOmnidocsProperties().getProperty("omnidocs.root"));
+			ps.setString(4, fromDate);
+			ps.setString(5, todayDate);
+			ps.setString(6, mainController.getOmnidocsProperties().getProperty("omnidocs.root"));
 			
 			ResultSet rs = ps.executeQuery();
 
 			while (rs.next()) {			
 
-				String folderName = rs.getString("SUBSDIARYOBJECTNAME");
+				String folderName = rs.getString("NAME");
 				
 				changedFolder = new ChangedFolder();
 				changedFolder.setFolderName(folderName);

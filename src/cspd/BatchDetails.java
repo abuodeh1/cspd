@@ -10,7 +10,11 @@ public class BatchDetails {
 	
 	private String fileNumber;
 	
-	private String name;
+	private String firstName;
+	
+	private String secondName;
+	
+	private String thirdName;
 	
 	private String year;
 	
@@ -52,14 +56,6 @@ public class BatchDetails {
 
 	public void setFileNumber(String fileNumber) {
 		this.fileNumber = fileNumber;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 
 	public String getYear() {
@@ -120,7 +116,7 @@ public class BatchDetails {
 
 	@Override
 	public String toString() {
-		return "BatchDetails [id=" + id + ", batchId=" + batchId + ", fileNumber=" + fileNumber + ", name=" + name
+		return "BatchDetails [id=" + id + ", batchId=" + batchId + ", fileNumber=" + fileNumber + ", name=" + firstName
 				+ ", year=" + year + ", fileStatus=" + fileStatus + ", indexName=" + indexName + ", serialNumber="
 				+ serialNumber + ", indexFileNumber=" + indexFileNumber + ", createdBy=" + createdBy + ", createDate="
 				+ createDate + "]";
@@ -142,7 +138,28 @@ public class BatchDetails {
 		this.fileType = fileType;
 	}
 
-	
-		
-	
+	public String getFirstName() {
+		return firstName;
+	}
+
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+
+	public String getSecondName() {
+		return secondName;
+	}
+
+	public void setSecondName(String secondName) {
+		this.secondName = secondName;
+	}
+
+	public String getThirdName() {
+		return thirdName;
+	}
+
+	public void setThirdName(String thirdName) {
+		this.thirdName = thirdName;
+	}
+
 }

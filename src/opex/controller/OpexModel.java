@@ -13,6 +13,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import cspd.BatchDetails;
@@ -27,8 +28,10 @@ import etech.dms.exception.FolderException;
 import etech.omni.OmniService;
 import etech.omni.core.DataDefinition;
 import etech.omni.core.Document;
+import etech.omni.core.Field;
 import etech.omni.core.Folder;
 import etech.omni.helper.NGOHelper;
+import etech.omni.utils.OmniDataDefinitionUtility;
 import etech.omni.utils.OmniDocumentUtility;
 import etech.omni.utils.OmniFolderUtility;
 import opex.element.Batch;
@@ -52,15 +55,6 @@ public class OpexModel {
 		Batch batch = readBatchOXI(opexFolder);
 		
 		int dfType = Integer.valueOf( opexFolder.getName().substring(opexFolder.getName().indexOf("+"), opexFolder.getName().lastIndexOf("+")) );
-		
-/*		if(opexFolder.getName().equals((String)mainController.getOmnidocsProperties().get("opex.passport")))
-			dfType = 1;
-		else if(opexFolder.getParentFile().getParentFile().getName().equals((String)mainController.getOmnidocsProperties().get("opex.civil")))
-			dfType = 2;
-		else if(opexFolder.getParentFile().getParentFile().getName().equals((String)mainController.getOmnidocsProperties().get("opex.vital")))
-			dfType = 3;
-		else if(opexFolder.getParentFile().getParentFile().getName().equals((String)mainController.getOmnidocsProperties().get("opex.embassies")))
-			dfType = 4;*/
 		
 		DataDefinition dataDefinition = prepareDataDefinition(omniService, dfType, opexFolder.getName());
 		
@@ -93,8 +87,6 @@ public class OpexModel {
 					fileDest.mkdirs();
 				
 				Files.move(file.toPath(), fileDest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-				
-				//move(folder, fileDest);
 				
 				mainController.writeLog("Folder (" + file.getName() + ") moved to the destination.");
 				
@@ -555,6 +547,7 @@ public class OpexModel {
 				}
 				
 				updateUploadedToDocuWare(folderName);
+				updateFolderMetaData(omniService, folderName);
 				
 				if(withErrors) {
 					
@@ -569,6 +562,47 @@ public class OpexModel {
 		}
 	}
 	
+	private void updateFolderMetaData(OmniService omniService, String folderName) {
+		try {
+			
+			String definitionName = null;
+			
+			switch(Integer.valueOf( folderName.substring(folderName.indexOf("+"), folderName.lastIndexOf("+")) ) ) {
+			
+			case 1: definitionName = (String)mainController.getOmnidocsProperties().get("opex.passport"); break;
+			case 2: definitionName = (String)mainController.getOmnidocsProperties().get("opex.civil"); break;
+			case 3: definitionName = (String)mainController.getOmnidocsProperties().get("opex.vital"); break;
+			case 4: definitionName = (String)mainController.getOmnidocsProperties().get("opex.embassies"); break;
+			
+			}
+			
+			String root = (String)mainController.getOmnidocsProperties().get("omnidocs.root");
+
+			List<Folder> folders = omniService.getFolderUtility().findFolderByName(root, folderName);
+			
+			Map<String, Field> fields = omniService.getFolderUtility().getFolder(folders.get(0).getFolderIndex()).getDataDefinition().getFields();
+			
+			String firstName = fields.get("Holder First Name").getIndexValue();
+			String secondName = fields.get("Holder Second Name").getIndexValue();
+			String thirdName = fields.get("Holder Third Name").getIndexValue();
+			
+			Connection connection = mainController.getSqlConnectionPoolService().get();
+			
+			PreparedStatement ps = connection.prepareStatement("UPDATE BatchDetails SET FirstName = ?, SecondName = ?, FamilyName = ? WHERE SerialNumber = ?");
+			ps.setString(1, firstName);
+			ps.setString(2, secondName);
+			ps.setString(3, thirdName);
+			ps.setString(4, folderName.substring(folderName.indexOf("%")+1));
+			
+			ps.execute();
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+		} 
+	}
+
 	private void updateUploadedToDocuWare(String folderName) {
 		try {
 			
@@ -636,10 +670,13 @@ public class OpexModel {
 				String serialNumber = batchDetails.getSerialNumber();
 				
 				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName(dataDefinitionName);
-				dataDefinition.getFields().get("Holder Name").setIndexValue(batchDetails.getName());
+				dataDefinition.getFields().get("Holder First Name").setIndexValue(batchDetails.getFirstName());
+				dataDefinition.getFields().get("Holder Second Name").setIndexValue(batchDetails.getSecondName());
+				dataDefinition.getFields().get("Holder Third Name").setIndexValue(batchDetails.getThirdName());
 				dataDefinition.getFields().get("Old Folder Number").setIndexValue(batchDetails.getFileNumber());
 				dataDefinition.getFields().get("New Folder Number").setIndexValue(batchDetails.getSerialNumber());
 				dataDefinition.getFields().get("Office Name").setIndexValue(batchDetails.getOfficeCode());
+				//dataDefinition.getFields().get("Old Office Name").setIndexValue(batchDetails.getOfficeCode());
 				dataDefinition.getFields().get("Document Type").setIndexValue(batchDetails.getFileType());
 				dataDefinition.getFields().get("Year").setIndexValue(batchDetails.getYear());
 	
@@ -649,7 +686,7 @@ public class OpexModel {
 				dataDefinitionName = (String) mainController.getOmnidocsProperties().get("omnidocs.dcCivil");
 				
 				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName(dataDefinitionName);
-				dataDefinition.getFields().get("status").setIndexValue(batchDetails.getName());
+				
 	
 				break;
 	
@@ -700,7 +737,7 @@ public class OpexModel {
 			
 			Connection connection = mainController.getSqlConnectionPoolService().get();
 			
-			PreparedStatement ps = connection.prepareStatement("SELECT (Firstname + ' ' + SecondName + ' ' + FamilyName) as Name, FileNumber, SerialNumber, b.OfficeCode, b.FileType, Year, *  FROM BatchDetails bd, Batches b where bd.BatchId = b.Id AND SerialNumber = ? AND Part = ?");
+			PreparedStatement ps = connection.prepareStatement("SELECT Firstname, SecondName, FamilyName, FileNumber, SerialNumber, b.OfficeCode, b.FileType, Year, *  FROM BatchDetails bd, Batches b where bd.BatchId = b.Id AND SerialNumber = ? AND Part = ?");
 			ps.setString(1, recordPrimaryKey.substring(recordPrimaryKey.indexOf("%")+1));
 			ps.setString(2, recordPrimaryKey.substring(0, recordPrimaryKey.indexOf("%")));
 
@@ -713,7 +750,9 @@ public class OpexModel {
 				batchDetails.setFileStatus(rs.getInt("FileStatus"));
 				batchDetails.setId(rs.getInt("Id"));
 				batchDetails.setIndexFileNumber(rs.getString("IndexFileNumber"));
-				batchDetails.setName(rs.getString("Name"));
+				batchDetails.setFirstName(rs.getString("Firstname"));
+				batchDetails.setSecondName(rs.getString("SecondName"));
+				batchDetails.setThirdName(rs.getString("FamilyName"));
 				batchDetails.setSerialNumber(rs.getString("SerialNumber"));
 				batchDetails.setYear(rs.getString("Year"));
 				batchDetails.setFileType(rs.getString("FileType"));
