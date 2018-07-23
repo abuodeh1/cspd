@@ -179,14 +179,6 @@ public class OpexModel {
 				File fileDest = new File(dest + System.getProperty("file.separator") + file.getParentFile().getName()
 						+ System.getProperty("file.separator") + file.getName());
 
-				if (!fileDest.getParentFile().exists())
-					fileDest.getParentFile().mkdirs();
-				else {
-					
-					Files.copy(fileDest.toPath(), new File(dest + fileDest.getParentFile().getName() + " - " + new Date().getTime()).toPath());
-					
-				}
-
 				Files.move(file.toPath(), fileDest.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
 				mainController.writeLog("Folder (" + file.getName() + ") moved to the destination.");
