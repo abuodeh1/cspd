@@ -19,14 +19,16 @@ public class ProcessLog implements Log {
 	private int timeUploadedToOmniDocs; 
 	private int timeUploadedToDocuware;
 	
-	public ProcessLog(String batchIdentifier, String machineName, String startTime, String endTime, int numberOfDocuments,
-			boolean isUploadedToOmniDocs, boolean isUploadedToDocuware, int timeUploadedToOmniDocs, int timeUploadedToDocuware) {
+	public ProcessLog(String batchIdentifier, int numberOfDocuments, String machineName, String startTime, String endTime) {
 
 		this.batchIdentifier = batchIdentifier;
 		this.machineName = machineName;
 		try {//2018-06-25 12:13:13
-			this.startTime = new Timestamp( new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(startTime).getTime() );
-			this.endTime = new Timestamp( new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(endTime).getTime() );
+			
+			Timestamp current  = new Timestamp( new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse( new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) ).getTime() );
+			
+			this.startTime = (startTime != null && startTime.length() != 0? new Timestamp( new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(startTime).getTime() ): current );
+			this.endTime = (startTime != null && endTime.length() != 0? new Timestamp( new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(endTime).getTime() ) : current);
 		} catch (ParseException e) {
 			e.printStackTrace();
 		} 

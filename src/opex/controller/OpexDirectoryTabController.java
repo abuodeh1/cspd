@@ -64,7 +64,7 @@ public class OpexDirectoryTabController {
 
 			File file = files[index];
 	
-			data.add( new OpexFolder(file.getName(), file.getAbsolutePath(), file.listFiles().length-1, "") );
+			data.add( new OpexFolder(file.getName(), file.getAbsolutePath(), file.listFiles().length, "") );
 		}
 
 		opexTable.setItems(data);
@@ -103,13 +103,13 @@ public class OpexDirectoryTabController {
 						
 						File folder = new File(opexFolder.getFolderPath());
 						
-						opexFolderReport.setTotalDocuments(folder.listFiles().length-1);
+						opexFolderReport.setTotalDocuments(folder.listFiles().length);
 						
 						
 						try {
 							mainController.writeLog("\nStart Upload Process For ( " + opexFolder.getFolderID() + " )");
 							
-							opexModel.uploadFolder(opexFolderReport, omniService, rootIndex, folder);
+							opexModel.uploadFolder(opexFolderReport, omniService, folder);
 							
 							mainController.writeLog("Finish Process For ( " + opexFolder.getFolderID() + " )\n" );
 							
@@ -139,8 +139,11 @@ public class OpexDirectoryTabController {
 					});
 					
 					Thread.sleep(50);
+					
 					mainController.writeLog("\nUpload Complete...");
 
+					omniService.complete();
+					
 					return null;
 				}
 			};

@@ -219,7 +219,7 @@ public class MainController {
 			
 			e.printStackTrace();
 			
-			throw new Exception ("Omnidocs Communication Problem");
+			throw new Exception (e.getMessage());
 
 		}
 		
@@ -498,7 +498,7 @@ public class MainController {
 		    Alert alert = new Alert(AlertType.ERROR);
 		    alert.setTitle("Error");
 		    alert.setHeaderText(headerText);
-		    alert.setContentText(e.getLocalizedMessage());
+		    alert.setContentText(e.getMessage());
 		    alert.showAndWait();
 		}
 
@@ -568,14 +568,14 @@ public class MainController {
 					int id = 0;
 					try {
 						ProcessLog processLog = (ProcessLog) log;
-						String sql = "INSERT INTO ProcessLog( BatchIdentifier, MachineName, StartTime, EndTime, NumberOfDocuments) "
+						String sql = "INSERT INTO ProcessLog( BatchIdentifier, NumberOfDocuments, MachineName, StartTime, EndTime) "
 								   + "VALUES (?, ?, ?, ?, ?)";
 						PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 						preparedStatement.setString(1, processLog.getBatchIdentifier());
-						preparedStatement.setString(2, processLog.getMachineName());
-						preparedStatement.setTimestamp(3, processLog.getStartTime());
-						preparedStatement.setTimestamp(4, processLog.getEndTime());
-						preparedStatement.setInt(5, processLog.getNumberOfDocuments());
+						preparedStatement.setInt(2, processLog.getNumberOfDocuments());
+						preparedStatement.setString(3, processLog.getMachineName());
+						preparedStatement.setTimestamp(4, processLog.getStartTime());
+						preparedStatement.setTimestamp(5, processLog.getEndTime());
 	
 						ResultSet rs = preparedStatement.executeQuery();
 						if(rs.next())
