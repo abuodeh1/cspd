@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -71,6 +72,8 @@ public class MainController {
 	
 	private PoolService<Connection> cspdConnectionPoolService;
 	private PoolService<Connection> omniConnectionPoolService;
+	
+	private List<OpexFolderReport> opexFolderReport = new ArrayList<>();
 	
 	@FXML public void initialize() {
 		
@@ -621,6 +624,16 @@ public class MainController {
 
 		return logID;
 	}
+
+
+	public List<OpexFolderReport> getOpexFolderReport() {
+		return opexFolderReport;
+	}
+
+	public void setOpexFolderReport(List<OpexFolderReport> opexFolderReport) {
+		this.opexFolderReport = opexFolderReport;
+	}
+
 
 	class Browser extends Region {
 

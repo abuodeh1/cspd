@@ -35,6 +35,8 @@ public class OpexDirectoryTabController {
 	@FXML private TableColumn<OpexFolder, String> status;
 	@FXML private Button uploadToOmnidocsButton;
 	
+	private OpexFolderReport opexFolderReport = new OpexFolderReport();
+	
 	@FXML public void initialize() {
 		folder.setCellValueFactory(new PropertyValueFactory<>("folderID"));
 		noOfDocuments.setCellValueFactory(new PropertyValueFactory<>("numberOfDocument"));
@@ -121,7 +123,7 @@ public class OpexDirectoryTabController {
 							
 							opexFolderReport.setFailedReason(e.getMessage());
 							
-							opexFolderReports.add(opexFolderReport);
+							mainController.getOpexFolderReport().add(opexFolderReport);
 							
 							mainController.writeLog("Finish Process With Errors");
 							
@@ -138,11 +140,13 @@ public class OpexDirectoryTabController {
 						
 					});
 					
-					Thread.sleep(50);
+					//Thread.sleep(50);
 					
-					mainController.writeLog("\nUpload Complete...");
+					//mainController.writeLog("\nUpload Complete...");
 
 					omniService.complete();
+					
+					//mainController.setOpexFolderReport(opexFolderReports);
 					
 					return null;
 				}
@@ -150,7 +154,7 @@ public class OpexDirectoryTabController {
 			
 			Thread taskThread = new Thread(task);
 			taskThread.start();
-			taskThread.join();
+			//taskThread.join();
 			
 			task.setOnSucceeded(e -> {
 				mainController.msgAlert("The upload task completed.");
@@ -163,7 +167,7 @@ public class OpexDirectoryTabController {
 
 			//opexModel.exportTaskWithSubfolder(omniService, "108", "D:\\temp1");
 		    
-			mainController.showReport(opexFolderReports);
+			
 			
 		} catch (Exception e) {
 
@@ -248,6 +252,14 @@ public class OpexDirectoryTabController {
 
 	public void injectMainController(MainController mainController) {
 		this.mainController = mainController;
+	}
+
+	public OpexFolderReport getOpexFolderReport() {
+		return opexFolderReport;
+	}
+
+	public void setOpexFolderReport(OpexFolderReport opexFolderReport) {
+		this.opexFolderReport = opexFolderReport;
 	}
 	
 

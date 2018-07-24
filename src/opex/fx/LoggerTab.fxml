@@ -12,6 +12,7 @@
 				<TextArea fx:id="loggerTextArea" editable="false" layoutX="27.0" layoutY="22.0" prefHeight="478.0" prefWidth="569.0" />
             <HBox alignment="CENTER_RIGHT" layoutX="27.0" layoutY="500.0" prefHeight="31.0" prefWidth="503.0">
                <children>
+                  <Button mnemonicParsing="false" onAction="#handleReportStatusButton" text="Report Status" />
                   <Button alignment="CENTER" mnemonicParsing="false" onAction="#handleSaveLogButton" text="Save Log" />
                </children>
             </HBox>

@@ -62,8 +62,7 @@ public class OpexModel {
 
 		//updateNumberOfPagesAndImages(opexFolder, batch);
 
-		int dfType = Integer.valueOf(opexFolder.getName().substring(opexFolder.getName().indexOf("+"),
-				opexFolder.getName().lastIndexOf("+")));
+		int dfType = Integer.valueOf(batchDetails.getFileType());//Integer.valueOf(opexFolder.getName().substring(opexFolder.getName().indexOf("+"), opexFolder.getName().lastIndexOf("+")));
 
 		DataDefinition dataDefinition = prepareDataDefinition(omniService, dfType, batchDetails);
 
@@ -176,9 +175,14 @@ public class OpexModel {
 			String dest = (String) mainController.getOmnidocsProperties().get("omnidocs.transferDest");
 
 			try {
+				
 				File fileDest = new File(dest + System.getProperty("file.separator") + file.getParentFile().getName()
 						+ System.getProperty("file.separator") + file.getName());
 
+				if(!fileDest.exists()) {
+					fileDest.mkdirs();
+				}
+				
 				Files.move(file.toPath(), fileDest.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
 				mainController.writeLog("Folder (" + file.getName() + ") moved to the destination.");
@@ -368,18 +372,8 @@ public class OpexModel {
 
 		long startDate = System.currentTimeMillis();
 
-		// read opex xml
+		String scanFolderPath = physicalFolder.getAbsolutePath();
 
-		String scanFolderPath = physicalFolder.getAbsolutePath();// batch.getImageFilePath();
-
-		// fetch metadata from database from index per file
-
-		/*
-		 * dir.listFiles(new FilenameFilter() {
-		 * 
-		 * @Override public boolean accept(File dir, String name) { return
-		 * name.toLowerCase().endsWith(".txt"); } });
-		 */
 		File[] files = physicalFolder.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
@@ -398,14 +392,6 @@ public class OpexModel {
 			try {
 				
 				omniService.getDocumentUtility().addDocument(new File(filePath), folderIndex, documentName);
-
-				// PdfReader documentReader = new PdfReader(file.getAbsolutePath());
-				//
-				// int count = documentReader.getNumberOfPages();
-				//
-				// documentReader.close();
-				//
-				// System.out.println("# of pages : " + count);
 
 				mainController.writeLog(filePath + " uploaded successfuly.");
 

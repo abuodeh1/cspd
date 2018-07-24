@@ -34,11 +34,18 @@ public class LoggerController {
 			
 			try(FileWriter fileLog = new FileWriter(file+"\\log.txt", true)){
 				fileLog.write(mainController.getLoggerTextArea().getText());
+				mainController.msgAlert("the file exported (log.txt).");
 			} catch (IOException e) {
 				mainController.errorAlert("Unable to write the file.", e);
 			}
 			
 		}
+	}
+	
+	@FXML public void handleReportStatusButton(ActionEvent ae){
+		
+		mainController.showReport(mainController.getOpexFolderReport());
+		
 	}
 }
 
