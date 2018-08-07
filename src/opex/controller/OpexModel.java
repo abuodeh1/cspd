@@ -36,6 +36,7 @@ import etech.omni.core.Folder;
 import etech.omni.helper.NGOHelper;
 import etech.omni.utils.OmniDocumentUtility;
 import etech.omni.utils.OmniFolderUtility;
+import opex.controller.SyncTabController.ChangedFolder;
 import opex.element.Batch;
 import opex.element.Batch.Transaction;
 import opex.element.Batch.Transaction.Group;
@@ -52,23 +53,26 @@ public class OpexModel {
 		this.mainController = mainController;
 	}
 
-	public void uploadFolder(OpexFolderReport opexFolderReport, OmniService omniService, File opexFolder) throws Exception {
+	public void uploadFolder(OpexFolderReport opexFolderReport, OmniService omniService, File opexFolder)
+			throws Exception {
 
 		BatchDetails batchDetails = getDataDefinitionFromDB(opexFolder.getName().replaceAll("_", "/"));
 
-		//Batch batch = readBatchOXI(opexFolder);
+		// Batch batch = readBatchOXI(opexFolder);
 
-		processLogID = mainController.writeDBLog(new ProcessLog(opexFolder.getName(), opexFolder.listFiles().length, "Machine 1", "", ""));
+		processLogID = mainController
+				.writeDBLog(new ProcessLog(opexFolder.getName(), opexFolder.listFiles().length, "Machine 1", "", ""));
 
-		//updateNumberOfPagesAndImages(opexFolder, batch);
+		// updateNumberOfPagesAndImages(opexFolder, batch);
 
-		int dfType = Integer.valueOf(batchDetails.getFileType());//Integer.valueOf(opexFolder.getName().substring(opexFolder.getName().indexOf("+"), opexFolder.getName().lastIndexOf("+")));
+		int dfType = Integer.valueOf(batchDetails.getFileType());// Integer.valueOf(opexFolder.getName().substring(opexFolder.getName().indexOf("+"),
+																	// opexFolder.getName().lastIndexOf("+")));
 
 		DataDefinition dataDefinition = prepareDataDefinition(omniService, dfType, batchDetails);
 
 		String parentFolderID = null;
-		
-		switch(dfType) {
+
+		switch (dfType) {
 		case 1:
 			parentFolderID = mainController.getOmnidocsProperties().getProperty("opex.passport");
 			break;
@@ -84,7 +88,7 @@ public class OpexModel {
 		default:
 			throw new Exception("Unable to specify data definition type");
 		}
-		
+
 		folderExistProcess(omniService, parentFolderID, opexFolder);
 
 		Folder addedFolder = addFolderProcess(omniService, parentFolderID, opexFolder, dataDefinition);
@@ -154,7 +158,7 @@ public class OpexModel {
 
 			mainController.writeLog("Number of pages and images updated.");
 
-			mainController.writeDBLog( new GeneralLog(processLogID, 4, "INFO", "NUMBER OF PAGES AND IMAGES UPDATED") );
+			mainController.writeDBLog(new GeneralLog(processLogID, 4, "INFO", "NUMBER OF PAGES AND IMAGES UPDATED"));
 
 		} catch (Exception e) {
 
@@ -162,7 +166,8 @@ public class OpexModel {
 
 			mainController.writeLog("Unable to update number of pages and images");
 
-			mainController.writeDBLog(new GeneralLog(processLogID, 4, "INFO", "UNABLE TO UPDATE NUMBER OF PAGES AND IMAGES"));
+			mainController
+					.writeDBLog(new GeneralLog(processLogID, 4, "INFO", "UNABLE TO UPDATE NUMBER OF PAGES AND IMAGES"));
 
 			throw e;
 		}
@@ -175,14 +180,14 @@ public class OpexModel {
 			String dest = (String) mainController.getOmnidocsProperties().get("omnidocs.transferDest");
 
 			try {
-				
+
 				File fileDest = new File(dest + System.getProperty("file.separator") + file.getParentFile().getName()
 						+ System.getProperty("file.separator") + file.getName());
 
-				if(!fileDest.exists()) {
+				if (!fileDest.exists()) {
 					fileDest.mkdirs();
 				}
-				
+
 				Files.move(file.toPath(), fileDest.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
 				mainController.writeLog("Folder (" + file.getName() + ") moved to the destination.");
@@ -241,7 +246,7 @@ public class OpexModel {
 				mainController.writeDBLog(new GeneralLog(processLogID, 2, "INFO",
 						"FOLDER NAMED " + folder.getName() + " FOUND? " + isFound));
 				try {
-					omniService.getFolderUtility().deleteFolder(folderRs.get(0).getFolderIndex());
+					omniService.getFolderUtility().delete(folderRs.get(0).getFolderIndex());
 
 					// updateDeleteFolderFlag(folder.getName());
 
@@ -313,9 +318,8 @@ public class OpexModel {
 			}
 
 			batch = NGOHelper.getResponseAsPOJO(Batch.class, new String(Files.readAllBytes(files[0].toPath())));
-			
-			moveUploadedFile(files[0]);
 
+			moveUploadedFile(files[0]);
 
 		} catch (Exception fe) {
 
@@ -386,12 +390,12 @@ public class OpexModel {
 			File file = files[index];
 
 			String filePath = scanFolderPath + System.getProperty("file.separator") + file.getName();
-			
+
 			String documentName = file.getName().substring(0, file.getName().lastIndexOf('.'));
 
 			try {
-				
-				omniService.getDocumentUtility().addDocument(new File(filePath), folderIndex, documentName);
+
+				omniService.getDocumentUtility().add(new File(filePath), folderIndex, documentName);
 
 				mainController.writeLog(filePath + " uploaded successfuly.");
 
@@ -410,11 +414,13 @@ public class OpexModel {
 
 				mainController.writeDBLog(new ProcessDetailsLog(processLogID, documentName, false));
 
-				mainController.writeDBLog(new GeneralLog(processLogID, 2, "ERROR", "UNABLE TO ADD DOCUMENT " + filePath));
+				mainController
+						.writeDBLog(new GeneralLog(processLogID, 2, "ERROR", "UNABLE TO ADD DOCUMENT " + filePath));
 
 				opexFolderReport.setDocumentLevel(true);
 
-				opexFolderReport.getFailedDocuments().add(new DocumentReport(documentName, "Unable to add document " + file.getName()));
+				opexFolderReport.getFailedDocuments()
+						.add(new DocumentReport(documentName, "Unable to add document " + file.getName()));
 
 				e.printStackTrace();
 
@@ -575,7 +581,6 @@ public class OpexModel {
 
 			folders.stream().forEach(folder -> {
 				try {
-
 					List<Document> documents = documentUtility.getDocumentList(folder.getFolderIndex(), false);
 					documents.stream().forEach(document -> {
 						String nextDest = "";
@@ -590,33 +595,38 @@ public class OpexModel {
 								fileLog.write("\n" + nextDest + " Created.");
 							}
 
-							uploadDocumentPath = nextDest + System.getProperty("file.separator") + document.getDocumentName();
-							
-							documentUtility.exportDocument(uploadDocumentPath, document);
+							uploadDocumentPath = nextDest + System.getProperty("file.separator")
+									+ document.getDocumentName() + "." + document.getCreatedByAppName();
+
+							documentUtility.exportByIndex(uploadDocumentPath, document.getDocumentIndex());
 
 							fileLog.write("\nThe document " + uploadDocumentPath + " exported successfully.");
-							
-							mainController.writeLog("\nThe document " + uploadDocumentPath + " exported successfully.");
-							
+
+							// mainController.writeLog("\nThe document " + uploadDocumentPath + " exported
+							// successfully.");
+
 						} catch (DocumentException e) {
 							try {
-								fileLog.write("\nUnable to upload a document called " + nextDest
-										+ System.getProperty("file.separator") + uploadDocumentPath);
-								mainController.writeLog("\nUnable to upload a document called " + nextDest
-										+ System.getProperty("file.separator") + uploadDocumentPath);
+								fileLog.write("\nUnable to upload a document called " + nextDest + System.getProperty("file.separator") + uploadDocumentPath);
+								/*
+								 * mainController.writeLog("\nUnable to upload a document called " + nextDest +
+								 * System.getProperty("file.separator") + uploadDocumentPath);
+								 */
 							} catch (IOException e1) {
 								// TODO Auto-generated catch block
 								e1.printStackTrace();
 							}
+							mainController.writeLog(e.getMessage());
 							e.printStackTrace();
 						} catch (FolderException e) {
 							try {
 								fileLog.write("\nUnable to create a folder called " + nextDest);
-								mainController.writeLog("\nUnable to create a folder called " + nextDest);
+								// mainController.writeLog("\nUnable to create a folder called " + nextDest);
 							} catch (IOException e1) {
 								// TODO Auto-generated catch block
 								e1.printStackTrace();
 							}
+							mainController.writeLog(e.getMessage());
 							e.printStackTrace();
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -626,27 +636,59 @@ public class OpexModel {
 				} catch (DocumentException e) {
 					try {
 						fileLog.write("Unable to get a document list");
-						mainController.writeLog("Unable to get a document list");
+						// mainController.writeLog("Unable to get a document list");
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
+						mainController.writeLog(e.getMessage());
 						e1.printStackTrace();
 					}
 					e.printStackTrace();
 				}
+
+				Thread t = new Thread(new Runnable() {
+
+					@Override
+					public void run() {
+						try {
+							exportTaskFoldersWithDocuments(omniService,
+									folderUtility.getFolderList(folder.getFolderIndex(), false), folderDestination);
+						} catch (FolderException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							mainController.writeLog(e.getMessage());
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							mainController.writeLog(e.getMessage());
+						}
+					}
+				});
+				t.start();
+				try {
+					t.join();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
 			});
 
 			System.out.println("exportTaskFoldersWithDocuments Task Completed with: "
 					+ TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate) + " s");
-			mainController.writeLog("exportTaskFoldersWithDocuments Task Completed with: "
-					+ TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate) + " s");
+			/*
+			 * mainController.
+			 * writeLog("exportTaskFoldersWithDocuments Task Completed with: " +
+			 * TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startDate) +
+			 * " s");
+			 */
 		}
 	}
 
-	public void syncFolder(OmniService omniService, String folderName) throws DocumentException {
+	public void syncFolder(OmniService omniService, ChangedFolder changedFolder) throws DocumentException {
 
 		boolean withErrors = false;
 
-		processLogID = getProcessLogIdFromDB(folderName);
+		processLogID = getProcessLogIdFromDB(changedFolder.getFolderName());
 
 		OmniDocumentUtility omniDocumentUtility = omniService.getDocumentUtility();
 		OmniFolderUtility omniFolderUtility = omniService.getFolderUtility();
@@ -654,7 +696,7 @@ public class OpexModel {
 		if (Boolean.valueOf((String) mainController.getOmnidocsProperties().get("omnidocs.transfer"))) {
 
 			String dest = (String) mainController.getOmnidocsProperties().get("omnidocs.transferDest")
-					+ System.getProperty("file.separator") + folderName;
+					+ System.getProperty("file.separator") + changedFolder.getFolderName();
 
 			File destFile = new File(dest);
 
@@ -694,16 +736,17 @@ public class OpexModel {
 				throw new DocumentException("Unable to create destination folder " + dest);
 			}
 
-			String folderIndex = null;
-			try {
-				folderIndex = omniFolderUtility
-						.findFolderByName((String) mainController.getOmnidocsProperties().get("omnidocs.root"),
-								folderName, false)
-						.get(0).getFolderIndex();
-			} catch (FolderException e1) {
-				e1.printStackTrace();
-			}
-			List<Document> documents = omniDocumentUtility.getDocumentList(folderIndex, false);
+			// String folderIndex = null;
+			// try {
+			// folderIndex = omniFolderUtility
+			// .findFolderByName(/*(String)
+			// mainController.getOmnidocsProperties().get("omnidocs.root")*/parentID,
+			// folderName, false)
+			// .get(0).getFolderIndex();
+			// } catch (FolderException e1) {
+			// e1.printStackTrace();
+			// }
+			List<Document> documents = omniDocumentUtility.getDocumentList(changedFolder.getFolderID(), false);
 			Iterator<Document> docIterator = documents.iterator();
 
 			while (docIterator.hasNext()) {
@@ -716,7 +759,7 @@ public class OpexModel {
 
 					String imagePath = dest + System.getProperty("file.separator") + docName;
 
-					omniDocumentUtility.exportDocument(imagePath, document);
+					omniDocumentUtility.exportByIndex(imagePath, document.getDocumentIndex());
 
 					// updateProcessDetailsLog(folderName, docName, "ADD");
 
@@ -750,8 +793,8 @@ public class OpexModel {
 
 			}
 
-			updateUploadedToDocuWare(folderName);
-			updateFolderMetaData(omniService, folderName);
+			updateUploadedToDocuWare(changedFolder.getFolderName());
+			// updateFolderMetaData(omniService, changedFolder);
 
 			if (withErrors) {
 
@@ -765,49 +808,87 @@ public class OpexModel {
 		}
 	}
 
-	private void updateFolderMetaData(OmniService omniService, String folderName) {
+	private void updateFolderMetaData(OmniService omniService, ChangedFolder changedFolder) {
 		try {
 
-			String definitionName = null;
-
-			switch (Integer.valueOf(folderName.substring(folderName.indexOf("+"), folderName.lastIndexOf("+")))) {
-
-			case 1:
-				definitionName = (String) mainController.getOmnidocsProperties().get("opex.passport");
-				break;
-			case 2:
-				definitionName = (String) mainController.getOmnidocsProperties().get("opex.civil");
-				break;
-			case 3:
-				definitionName = (String) mainController.getOmnidocsProperties().get("opex.vital");
-				break;
-			case 4:
-				definitionName = (String) mainController.getOmnidocsProperties().get("opex.embassies");
-				break;
-
-			}
-
-			String root = (String) mainController.getOmnidocsProperties().get("omnidocs.root");
-
-			List<Folder> folders = omniService.getFolderUtility().findFolderByName(root, folderName);
-
-			Map<String, Field> fields = omniService.getFolderUtility().getFolder(folders.get(0).getFolderIndex())
+			Map<String, Field> fields = omniService.getFolderUtility().getFolder(changedFolder.getFolderID())
 					.getDataDefinition().getFields();
 
-			String firstName = fields.get("Holder First Name").getIndexValue();
-			String secondName = fields.get("Holder Second Name").getIndexValue();
-			String thirdName = fields.get("Holder Third Name").getIndexValue();
+			BatchDetails batchDetails = new BatchDetails();
+			batchDetails.setFamilyName(fields.get("Family Name").getIndexValue());
+			batchDetails.setFileType(fields.get("File Type").getIndexValue());
+			batchDetails.setFirstName(fields.get("First Name").getIndexValue());
+			batchDetails.setFolderClassCode(fields.get("Folder Class Code").getIndexValue());
+			batchDetails.setFolderClassText(fields.get("Folder Class Text").getIndexValue());
+			batchDetails.setOfficeCode(fields.get("Office Code").getIndexValue());
+			batchDetails.setOfficeName(fields.get("Office Name").getIndexValue());
+			batchDetails.setPart(fields.get("Part").getIndexValue());
+			batchDetails.setPrefix(fields.get("Prefix").getIndexValue());
+			batchDetails.setSecondName(fields.get("Second Name").getIndexValue());
+			batchDetails.setSerialNumber(fields.get("Serial").getIndexValue());
+			batchDetails.setSerialOldNumber(fields.get("Old Serial").getIndexValue());
+			batchDetails.setThirdName(fields.get("Third Name").getIndexValue());
+			batchDetails.setYear(fields.get("Year").getIndexValue());
 
 			Connection connection = mainController.getSqlConnectionPoolService().get();
 
-			PreparedStatement ps = connection.prepareStatement(
-					"UPDATE BatchDetails SET FirstName = ?, SecondName = ?, FamilyName = ? WHERE SerialNumber = ?");
-			ps.setString(1, firstName);
-			ps.setString(2, secondName);
-			ps.setString(3, thirdName);
-			ps.setString(4, folderName.substring(folderName.indexOf("%") + 1));
+			PreparedStatement batchesPreparedStatement = null;
+			PreparedStatement batchesDetailsPreparedStatement = null;
 
-			ps.execute();
+			// String definitionName = null;
+
+			switch (Integer.valueOf(changedFolder.getFolderName().substring(changedFolder.getFolderName().indexOf("+"),
+					changedFolder.getFolderName().lastIndexOf("+")))) {
+
+			case 1:
+				// definitionName = (String)
+				// mainController.getOmnidocsProperties().get("opex.passport");
+
+				/*
+				 * batchesPreparedStatement = connection.prepareStatement( "UPDATE Batches SET "
+				 * + "OfficeCode = ? " + "WHERE SerialNumber = ?");
+				 * 
+				 * batchesPreparedStatement.setString(1, batchDetails.getOfficeCode());
+				 * 
+				 * batchesPreparedStatement.setString(100,
+				 * changedFolder.getFolderName().substring(changedFolder.getFolderName().indexOf
+				 * ("%") + 1));
+				 */
+				batchesDetailsPreparedStatement = connection.prepareStatement("UPDATE BatchDetails SET "
+						+ "FirstName = ?, " + "SecondName = ?, " + "FamilyName = ? " + "WHERE SerialNumber = ?",
+						new String[] { "BatchId" });
+
+				// batchesDetailsPreparedStatement.setString(2, batchDetails.getOfficeName());
+				batchesDetailsPreparedStatement.setString(3, batchDetails.getPrefix());
+				batchesDetailsPreparedStatement.setString(4, batchDetails.getSerialOldNumber());
+				batchesDetailsPreparedStatement.setString(5, batchDetails.getSerialNumber());
+				batchesDetailsPreparedStatement.setString(6, batchDetails.getFirstName());
+				batchesDetailsPreparedStatement.setString(7, batchDetails.getSecondName());
+				batchesDetailsPreparedStatement.setString(8, batchDetails.getThirdName());
+				batchesDetailsPreparedStatement.setString(9, batchDetails.getFamilyName());
+				batchesDetailsPreparedStatement.setString(10, batchDetails.getYear());
+				batchesDetailsPreparedStatement.setString(11, batchDetails.getPart());
+				batchesDetailsPreparedStatement.setString(12,
+						changedFolder.getFolderName().substring(changedFolder.getFolderName().indexOf("%") + 1));
+
+				// batchesPreparedStatement.execute();
+				// batchesDetailsPreparedStatement.execute();
+
+				break;
+			case 2:
+				// definitionName = (String)
+				// mainController.getOmnidocsProperties().get("opex.civil");
+				break;
+			case 3:
+				// definitionName = (String)
+				// mainController.getOmnidocsProperties().get("opex.vital");
+				break;
+			case 4:
+				// definitionName = (String)
+				// mainController.getOmnidocsProperties().get("opex.embassies");
+				break;
+
+			}
 
 		} catch (Exception e) {
 
@@ -869,8 +950,8 @@ public class OpexModel {
 		return resolvedFilename;
 	}
 
-	public DataDefinition prepareDataDefinition(OmniService omniService, int dataDefinitionType, BatchDetails batchDetails)
-			throws Exception {
+	public DataDefinition prepareDataDefinition(OmniService omniService, int dataDefinitionType,
+			BatchDetails batchDetails) throws Exception {
 
 		DataDefinition dataDefinition = null;
 		String dataDefinitionName = null;
@@ -882,23 +963,23 @@ public class OpexModel {
 				dataDefinitionName = (String) mainController.getOmnidocsProperties().get("omnidocs.dcPassport");
 
 				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName(dataDefinitionName);
-				
+
 				dataDefinition.getFields().get("Office Code").setIndexValue(batchDetails.getOfficeCode());
 				dataDefinition.getFields().get("Office Name").setIndexValue(batchDetails.getOfficeName());
-				
+
 				dataDefinition.getFields().get("Prefix").setIndexValue(batchDetails.getPrefix());
-			
+
 				dataDefinition.getFields().get("Old Serial").setIndexValue(batchDetails.getSerialOldNumber());
 				dataDefinition.getFields().get("Serial").setIndexValue(batchDetails.getSerialNumber());
-				
+
 				dataDefinition.getFields().get("First Name").setIndexValue(batchDetails.getFirstName());
 				dataDefinition.getFields().get("Second Name").setIndexValue(batchDetails.getSecondName());
 				dataDefinition.getFields().get("Third Name").setIndexValue(batchDetails.getThirdName());
 				dataDefinition.getFields().get("Family Name").setIndexValue(batchDetails.getFamilyName());
-				
+
 				dataDefinition.getFields().get("Year").setIndexValue(batchDetails.getYear());
 				dataDefinition.getFields().get("Part").setIndexValue(batchDetails.getPart());
-				
+
 				break;
 
 			case 2:
@@ -906,37 +987,37 @@ public class OpexModel {
 
 				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName(dataDefinitionName);
 
-				dataDefinition.getFields().get("Office Code").setIndexValue(batchDetails.getOfficeCode());				
+				dataDefinition.getFields().get("Office Code").setIndexValue(batchDetails.getOfficeCode());
 				dataDefinition.getFields().get("Prefix").setIndexValue(batchDetails.getPrefix());
 				dataDefinition.getFields().get("Year").setIndexValue(batchDetails.getYear());
-				
+
 				dataDefinition.getFields().get("First Name").setIndexValue(batchDetails.getFirstName());
 				dataDefinition.getFields().get("Second Name").setIndexValue(batchDetails.getSecondName());
 				dataDefinition.getFields().get("Third Name").setIndexValue(batchDetails.getThirdName());
 				dataDefinition.getFields().get("Family Name").setIndexValue(batchDetails.getFamilyName());
-				
+
 				break;
 
 			case 3:
 				dataDefinitionName = (String) mainController.getOmnidocsProperties().get("omnidocs.dcVital");
 
 				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName(dataDefinitionName);
-				
-				dataDefinition.getFields().get("Office Code").setIndexValue(batchDetails.getOfficeCode());				
+
+				dataDefinition.getFields().get("Office Code").setIndexValue(batchDetails.getOfficeCode());
 				dataDefinition.getFields().get("Prefix").setIndexValue(batchDetails.getPrefix());
 				dataDefinition.getFields().get("Year").setIndexValue(batchDetails.getYear());
-				
-				dataDefinition.getFields().get("Folder Class Code").setIndexValue(batchDetails.getFolderClassCode());				
+
+				dataDefinition.getFields().get("Folder Class Code").setIndexValue(batchDetails.getFolderClassCode());
 				dataDefinition.getFields().get("Folder Class Text").setIndexValue(batchDetails.getFolderClassText());
-				
+
 				break;
 
 			case 4:
 				dataDefinitionName = (String) mainController.getOmnidocsProperties().get("omnidocs.dcEmbassiess");
 
 				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName(dataDefinitionName);
-				
-				dataDefinition.getFields().get("Office Code").setIndexValue(batchDetails.getOfficeCode());				
+
+				dataDefinition.getFields().get("Office Code").setIndexValue(batchDetails.getOfficeCode());
 				dataDefinition.getFields().get("Prefix").setIndexValue(batchDetails.getPrefix());
 				dataDefinition.getFields().get("Year").setIndexValue(batchDetails.getYear());
 				dataDefinition.getFields().get("File Type").setIndexValue(batchDetails.getFileType());
@@ -944,17 +1025,18 @@ public class OpexModel {
 				break;
 
 			case 5:
-				dataDefinitionName = (String) mainController.getOmnidocsProperties().get("omnidocs.dcVitalNonJordandian");
+				dataDefinitionName = (String) mainController.getOmnidocsProperties()
+						.get("omnidocs.dcVitalNonJordandian");
 
 				dataDefinition = omniService.getDataDefinitionUtility().findDataDefinitionByName(dataDefinitionName);
-				
-				dataDefinition.getFields().get("Office Code").setIndexValue(batchDetails.getOfficeCode());				
+
+				dataDefinition.getFields().get("Office Code").setIndexValue(batchDetails.getOfficeCode());
 				dataDefinition.getFields().get("Prefix").setIndexValue(batchDetails.getPrefix());
 				dataDefinition.getFields().get("Year").setIndexValue(batchDetails.getYear());
-				
-				dataDefinition.getFields().get("Folder Class Code").setIndexValue(batchDetails.getFolderClassCode());				
+
+				dataDefinition.getFields().get("Folder Class Code").setIndexValue(batchDetails.getFolderClassCode());
 				dataDefinition.getFields().get("Folder Class Text").setIndexValue(batchDetails.getFolderClassText());
-				
+
 			default:
 
 				throw new Exception();
@@ -993,30 +1075,17 @@ public class OpexModel {
 
 			Connection connection = mainController.getSqlConnectionPoolService().get();
 
-			PreparedStatement ps = connection.prepareStatement(
-													"SELECT b.OfficeCode, " + 
-													"	oe.OfficeName, " + 
-													"	b.FileType, " + 
-													"	dbo.GetFileOldSerial(bd.FileNumber, b.FileType) AS OldSerial, " + 
-													"	dbo.GetFilePrefix(bd.FileNumber, b.FileType) AS Prefix, " + 
-													"	bd.Year, " + 
-													"	dbo.GetNewSerial(bd.SerialNumber) AS SerialNumber, " + 
-													"	bd.Part, " + 
-													"	bd.FirstName, " + 
-													"	bd.SecondName, " + 
-													"	bd.ThirdName, " + 
-													"	bd.FamilyName, " + 
-													"	bd.FileNumber, " + 
-													"	dbo.GetFolderClassCode(bd.SerialNumber) AS FolderClassCode, " + 
-													"	dbo.GetFolderClassText(bd.SerialNumber) AS FolderClassText  " + 
-													"FROM Batches b  " + 
-													"		INNER JOIN BatchDetails bd  " + 
-													"		ON b.Id=bd.BatchId  " + 
-													"			INNER JOIN OldOffices oe  " + 
-													"			ON b.OldOfficeCode = oe.OfficeCode  " + 
-													"WHERE SerialNumber = ?  " + 
-													"AND   Part = ?");
-			
+			PreparedStatement ps = connection.prepareStatement("SELECT b.OfficeCode, " + "	oe.OfficeName, "
+					+ "	b.FileType, " + "	dbo.GetFileOldSerial(bd.FileNumber, b.FileType) AS OldSerial, "
+					+ "	dbo.GetFilePrefix(bd.FileNumber, b.FileType) AS Prefix, " + "	bd.Year, "
+					+ "	dbo.GetNewSerial(bd.SerialNumber) AS SerialNumber, " + "	bd.Part, " + "	bd.FirstName, "
+					+ "	bd.SecondName, " + "	bd.ThirdName, " + "	bd.FamilyName, " + "	bd.FileNumber, "
+					+ "	dbo.GetFolderClassCode(bd.SerialNumber) AS FolderClassCode, "
+					+ "	dbo.GetFolderClassText(bd.SerialNumber) AS FolderClassText  " + "FROM Batches b  "
+					+ "		INNER JOIN BatchDetails bd  " + "		ON b.Id=bd.BatchId  "
+					+ "			INNER JOIN OldOffices oe  " + "			ON b.OldOfficeCode = oe.OfficeCode  "
+					+ "WHERE SerialNumber = ?  " + "AND   Part = ?");
+
 			ps.setString(1, // recordPrimaryKey.substring(0, recordPrimaryKey.indexOf("%")));
 					recordPrimaryKey.contains("%") ? recordPrimaryKey.substring(0, recordPrimaryKey.indexOf("%"))
 							: recordPrimaryKey);
@@ -1041,7 +1110,7 @@ public class OpexModel {
 				batchDetails.setFileNumber("FileNumber");
 				batchDetails.setFolderClassCode(rs.getString("FolderClassCode"));
 				batchDetails.setFolderClassText(rs.getString("FolderClassText"));
-				
+
 				mainController.writeLog("Metadata fetched up from database successfuly");
 
 				mainController.writeDBLog(

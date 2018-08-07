@@ -6,15 +6,15 @@
 	<artifactId>cspd</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<dependencies>
-		<dependency>
+		<!-- <dependency>
 			<groupId>dms-api</groupId>
 			<artifactId>dms-api</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>omni-dms-impl</groupId>
 			<artifactId>omni-dms-impl</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0</version>
 		</dependency>
 		<!-- <dependency> <groupId>com.itextpdf</groupId> <artifactId>itextpdf</artifactId> 
 			<version>5.5.13</version> </dependency> -->

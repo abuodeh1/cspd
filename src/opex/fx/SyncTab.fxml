@@ -20,6 +20,7 @@
             <TableColumn fx:id="status" prefWidth="214.0" text="Status" />
         </columns>
       </TableView>
-      <Button fx:id="syncButton" alignment="CENTER" layoutX="269.0" layoutY="472.0" mnemonicParsing="false" onAction="#handleSyncButton" prefHeight="25.0" prefWidth="79.0" text="Sync" />
+      <Button fx:id="syncButton" alignment="CENTER" layoutX="190.0" layoutY="472.0" mnemonicParsing="false" onAction="#handleSyncButton" prefHeight="25.0" prefWidth="79.0" text="Sync" />
+      <Button fx:id="exportAllBtn" layoutX="308.0" layoutY="472.0" mnemonicParsing="false" onAction="#handleExportAll" text="Export All CSPD Sub Folders" />
    </children>
 </AnchorPane>

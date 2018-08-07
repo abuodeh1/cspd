@@ -1,5 +1,6 @@
 package opex.controller;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,6 +11,7 @@ import java.util.Calendar;
 import java.util.List;
 
 import etech.omni.OmniService;
+import etech.omni.core.Folder;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -34,7 +36,10 @@ public class SyncTabController {
 	private ComboBox<String> daysBefore;
 	@FXML
 	private Button syncButton;
-
+	@FXML
+	private Button exportAllBtn;
+	
+	
 	@FXML TableView<ChangedFolder> changesTable;
 	@FXML private TableColumn<ChangedFolder, String> folder;
 	@FXML private TableColumn<ChangedFolder, String> status;
@@ -79,66 +84,76 @@ public class SyncTabController {
 		ChangedFolder changedFolder = null;
 		final List<ChangedFolder> changedFolders = new ArrayList<>();
 		Connection connection = null;
+		OmniService omniService = null;
+
 		try {
 			
-			/*String sqlQuery = "SELECT DISTINCT A.SUBSDIARYOBJECTNAME FROM PDBNEWAUDITTRAIL_TABLE A, PDBDOCUMENTCONTENT C, PDBFOLDER F " + 
-								"WHERE ACTIVEOBJECTTYPE='D' AND ACTIVEOBJECTID = DOCUMENTINDEX AND C.PARENTFOLDERINDEX = F.FOLDERINDEX  " + 
-								"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " +
-								"AND ACTIONID IN (317, 321) " + 
-								"AND DATETIME > (SELECT MAX(CREATEDDATETIME) FROM PDBFOLDER WHERE FOLDERINDEX = SUBSDIARYOBJECTID) " + 
-								"AND SUBSDIARYOBJECTID  IN (SELECT FOLDERINDEX FROM PDBFOLDER P WHERE P.PARENTFOLDERINDEX = ?) ";
-			*/
+			String dfTypeFolders = "("
+								 .concat(mainController.getOmnidocsProperties().getProperty("opex.passport"))
+								 .concat(",")
+								 .concat(mainController.getOmnidocsProperties().getProperty("opex.civil"))
+								 .concat(",")
+								 .concat(mainController.getOmnidocsProperties().getProperty("opex.vital"))
+								 .concat(",")
+								 .concat(mainController.getOmnidocsProperties().getProperty("opex.embassies"))
+								 .concat(")");
 			
 			String sqlQuery = null;
 			
-			String sqlQueryOracle = "SELECT DISTINCT SUBSDIARYOBJECTNAME AS NAME FROM PDBNEWAUDITTRAIL_TABLE A, PDBDOCUMENTCONTENT C, PDBFOLDER F " + 
-									"WHERE ACTIVEOBJECTTYPE = 'D' " + 
-									"AND ACTIVEOBJECTID = DOCUMENTINDEX " + 
-									"AND C.PARENTFOLDERINDEX = F.FOLDERINDEX " + 
-									"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " + 
-									"AND ACTIONID IN (317, 321) " + 
+			String sqlQueryOracle = "SELECT DISTINCT SUBSDIARYOBJECTNAME AS NAME, SUBSDIARYOBJECTID FROM PDBNEWAUDITTRAIL_TABLE A, PDBFOLDER F " + 
+									"WHERE USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " + 
 									"AND DATETIME BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD') " + 
 									"AND DATETIME > (SELECT MAX(CREATEDDATETIME) FROM PDBFOLDER WHERE FOLDERINDEX = SUBSDIARYOBJECTID) " + 
-									"AND SUBSDIARYOBJECTID  IN (SELECT FOLDERINDEX FROM PDBFOLDER P WHERE P.PARENTFOLDERINDEX = ?) " + 
+									"AND SUBSDIARYOBJECTID IN (SELECT FOLDERINDEX FROM PDBFOLDER P WHERE P.PARENTFOLDERINDEX IN " + dfTypeFolders + ") " +
+									"AND A.COMMNT NOT LIKE '%Trash%' " + 
+									"AND ACTIONID NOT IN (204) " +
 									"UNION " + 
-									"SELECT DISTINCT NAME FROM JLGCCAB1.PDBNEWAUDITTRAIL_TABLE, PDBFOLDER F " + 
-									"WHERE ACTIVEOBJECTID = FOLDERINDEX " + 
-									"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " + 
-									"AND ACTIONID IN (317, 321, 204) " + 
+									"SELECT DISTINCT F.NAME, ACTIVEOBJECTID AS SUBSDIARYOBJECTID FROM PDBNEWAUDITTRAIL_TABLE A, PDBFOLDER F " + 
+									"WHERE USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " + 
 									"AND DATETIME BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD') " + 
 									"AND DATETIME > (SELECT MAX(CREATEDDATETIME) FROM PDBFOLDER WHERE FOLDERINDEX = ACTIVEOBJECTID) " + 
-									"AND ACTIVEOBJECTNAME IN (SELECT NAME FROM PDBFOLDER WHERE PARENTFOLDERINDEX = ?)";
+									"AND SUBSDIARYOBJECTID = -1 " + 
+									"AND F.FOLDERINDEX = ACTIVEOBJECTID " + 
+									"AND CATEGORY = 'F' " + 
+									"AND ACTIVEOBJECTID IN (SELECT FOLDERINDEX FROM PDBFOLDER P WHERE P.PARENTFOLDERINDEX IN " + dfTypeFolders + ") "  +
+									"AND A.COMMNT NOT LIKE '%Trash%' " + 
+									"AND ACTIONID NOT IN (204)" ;
+
+			String sqlQuerySQLSrv = "SELECT DISTINCT SUBSDIARYOBJECTNAME AS NAME, SUBSDIARYOBJECTID FROM PDBNewAuditTrail_Table A, PDBFolder F " + 
+									"WHERE USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " + 
+									"AND DATETIME BETWEEN CONVERT(Date, ?, 111) AND CONVERT(Date, ?, 111) " + 
+									"AND DATETIME > (SELECT MAX(CREATEDDATETIME) FROM PDBFOLDER WHERE FOLDERINDEX = SUBSDIARYOBJECTID) " + 
+									"AND SUBSDIARYOBJECTID IN (SELECT FOLDERINDEX FROM PDBFOLDER P WHERE P.PARENTFOLDERINDEX IN " + dfTypeFolders + ")"  +
+									"AND A.COMMNT NOT LIKE '%Trash%' " + 
+									"AND ACTIONID NOT IN (204) " +
+									"UNION " + 
+									"SELECT DISTINCT F.NAME, ACTIVEOBJECTID AS SUBSDIARYOBJECTID FROM PDBNewAuditTrail_Table A, PDBFolder F " + 
+									"WHERE USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " + 
+									"AND DATETIME BETWEEN CONVERT(Date, ?, 111) AND CONVERT(Date, ?, 111) " + 
+									"AND DATETIME > (SELECT MAX(CREATEDDATETIME) FROM PDBFOLDER WHERE FOLDERINDEX = ACTIVEOBJECTID) " + 
+									"AND SUBSDIARYOBJECTID = -1 " + 
+									"AND F.FOLDERINDEX = ACTIVEOBJECTID " + 
+									"AND CATEGORY = 'F' " + 
+									"AND ACTIVEOBJECTID IN (SELECT FOLDERINDEX FROM PDBFOLDER P WHERE P.PARENTFOLDERINDEX IN " + dfTypeFolders + ") " +
+									"AND A.COMMNT NOT LIKE '%Trash%' " + 
+									"AND ACTIONID NOT IN (204)" ;
 			
-			String sqlQuerySQLSrv = "SELECT DISTINCT SUBSDIARYOBJECTNAME AS NAME FROM PDBNEWAUDITTRAIL_TABLE A, PDBDOCUMENTCONTENT C, PDBFOLDER F " + 
-									"WHERE ACTIVEOBJECTTYPE = 'D' " + 
-									"AND ACTIVEOBJECTID = DOCUMENTINDEX " + 
-									"AND C.PARENTFOLDERINDEX = F.FOLDERINDEX " + 
-									"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " + 
-									"AND ACTIONID IN (317, 321) " + 
-									"AND DATETIME BETWEEN CONVERT(Date, ?, 111) AND CONVERT(Date, ?, 111) " + 
-									"AND DATETIME > (SELECT MAX(CREATEDDATETIME) FROM PDBFOLDER WHERE FOLDERINDEX = SUBSDIARYOBJECTID) " + 
-									"AND SUBSDIARYOBJECTID  IN (SELECT FOLDERINDEX FROM PDBFOLDER P WHERE P.PARENTFOLDERINDEX = ?) " + 
-									"UNION " + 
-									"SELECT DISTINCT NAME FROM JLGCCAB1.PDBNEWAUDITTRAIL_TABLE, PDBFOLDER F " + 
-									"WHERE ACTIVEOBJECTID = FOLDERINDEX " + 
-									"AND USERINDEX IN (SELECT USERINDEX FROM PDBGROUPMEMBER WHERE GROUPINDEX = (SELECT GROUPINDEX FROM PDBGROUP WHERE GROUPNAME LIKE 'Quality%')) " + 
-									"AND ACTIONID IN (317, 321, 204) " + 
-									"AND DATETIME BETWEEN CONVERT(Date, ?, 111) AND CONVERT(Date, ?, 111) " + 
-									"AND DATETIME > (SELECT MAX(CREATEDDATETIME) FROM PDBFOLDER WHERE FOLDERINDEX = ACTIVEOBJECTID) " + 
-									"AND ACTIVEOBJECTNAME IN (SELECT NAME FROM PDBFOLDER WHERE PARENTFOLDERINDEX = ?)";
-							
-			if(mainController.getOmniService().getCabinetUtility().getCabinetinfo().get(0).getDatabaseType().equalsIgnoreCase("oracle")){
+			omniService = mainController.getOmniService();
+			
+			if(omniService.getCabinetUtility().getCabinetinfo().get(0).getDatabaseType().equalsIgnoreCase("oracle")){
 				
 				sqlQuery = sqlQueryOracle;
 				
-				connection = mainController.getOracleConnectionPoolService().get();
+				//connection = mainController.getOracleConnectionPoolService().get();
 						
 			} else {
 				
 				sqlQuery = sqlQuerySQLSrv;
 				
-				connection = mainController.getSqlConnectionPoolService().get();
+				
 			}
+			
+			connection = mainController.getOracleConnectionPoolService().get();
 			
 			Calendar calendar = Calendar.getInstance();
 			calendar.add(Calendar.DAY_OF_MONTH, 1);
@@ -150,28 +165,33 @@ public class SyncTabController {
 			PreparedStatement ps = connection.prepareStatement(sqlQuery);
 			ps.setString(1, fromDate);
 			ps.setString(2, todayDate);
-			ps.setString(3, mainController.getOmnidocsProperties().getProperty("omnidocs.root"));
-			ps.setString(4, fromDate);
-			ps.setString(5, todayDate);
-			ps.setString(6, mainController.getOmnidocsProperties().getProperty("omnidocs.root"));
+			ps.setString(3, fromDate);
+			ps.setString(4, todayDate);
 			
 			ResultSet rs = ps.executeQuery();
 
 			while (rs.next()) {			
 
 				String folderName = rs.getString("NAME");
+				String folderID = rs.getString("SUBSDIARYOBJECTID");
 				
 				changedFolder = new ChangedFolder();
 				changedFolder.setFolderName(folderName);
+				changedFolder.setFolderID(folderID);
 				
 				changedFolders.add(changedFolder);
 			}
 
 		} catch (Exception e) {
-
+		
+			mainController.errorAlert("Error Communication ...", e);
+			
 			e.printStackTrace();
 
 		} finally {
+	
+			if(omniService != null)
+				omniService.complete();
 			
 			try {
 				connection.close();
@@ -184,16 +204,14 @@ public class SyncTabController {
 		return changedFolders;
 
 	}
-
+	
 	@FXML
 	public void handleSyncButton(ActionEvent event) {
 
 		mainController.getLoggerTextArea().clear();
 		
 		try {
-			
-			OmniService omniService = mainController.getOmniService();
-			
+
 			OpexModel opexModel = new OpexModel(mainController);
 			
 			Task<Void> task = new Task<Void>() {
@@ -204,10 +222,16 @@ public class SyncTabController {
 					syncButton.setDisable(true);
 					
 					changesTable.getItems().stream().forEach(changedFolder -> {
+						
+						OmniService omniService = null;
+						
 						try {
+							
+							omniService = mainController.getOmniService();
+							
 							mainController.writeLog("\nSync Process For ( " + changedFolder.getFolderName() + " )");
 							
-							opexModel.syncFolder(omniService, changedFolder.getFolderName());
+							opexModel.syncFolder(omniService, changedFolder);
 							
 							mainController.writeLog("Finish Process For ( " + changedFolder.getFolderName() + " )" );
 							
@@ -221,6 +245,9 @@ public class SyncTabController {
 							
 							
 						}finally {
+							
+							if(omniService != null)
+								omniService.complete();
 							
 							changesTable.refresh();
 						}
@@ -248,14 +275,106 @@ public class SyncTabController {
 			task.setOnCancelled(e -> syncButton.setDisable(false));
 
 			//opexModel.exportTaskWithSubfolder(omniService, "108", "D:\\temp1");
-		    
+
 		} catch (Exception e) {
 
 			mainController.errorAlert("Error Communication ...", e);
 			
 			e.printStackTrace();
 			
-		}
+		} 
+		
+	}
+	
+	@FXML
+	public void handleExportAll(ActionEvent event) {
+		//exportAllBtn
+		mainController.getLoggerTextArea().clear();
+		
+		try {
+
+			Task<Void> task = new Task<Void>() {
+				
+				@Override
+				protected Void call() throws Exception {
+					
+					exportAllBtn.setDisable(true);
+					
+					OpexModel opexModel = new OpexModel(mainController);
+
+					OmniService omniService = null;
+					
+					try {
+						
+						omniService = mainController.getOmniService();
+						
+						List<Folder> folders = omniService.getFolderUtility().getFolderList(mainController.getOmnidocsProperties().getProperty("omnidocs.root"), false);
+						
+						String exportAllDestination = mainController.getOmnidocsProperties().getProperty("omnidocs.exportAllFolder");
+						
+						new File(exportAllDestination).mkdirs();
+						Thread t = new Thread(new Runnable() {
+
+							@Override
+							public void run() {
+								OmniService omniService = null;
+								try {
+									omniService = mainController.getOmniService();
+									opexModel.exportTaskFoldersWithDocuments(omniService, folders, exportAllDestination);
+								} catch (Exception e) {
+									mainController.writeLog(e.getMessage());
+									e.printStackTrace();
+								}finally {
+									
+									if(omniService != null)
+										omniService.complete();
+									
+									changesTable.refresh();
+								}
+								
+							}});
+						
+						t.start();
+						t.join();
+						
+						
+					}finally {
+						
+						if(omniService != null)
+							omniService.complete();
+						
+						changesTable.refresh();
+					}
+
+					Thread.sleep(50);
+					mainController.writeLog("\nSync Complete...");
+
+					return null;
+					}
+				};
+			
+			
+			Thread taskThread = new Thread(task);
+			taskThread.start();
+			
+			task.setOnSucceeded(e -> {
+				mainController.msgAlert("The upload task completed.");
+				exportAllBtn.setDisable(false);
+			});
+
+			task.setOnFailed(e -> exportAllBtn.setDisable(false));
+
+			task.setOnCancelled(e -> exportAllBtn.setDisable(false));
+
+			//opexModel.exportTaskWithSubfolder(omniService, "108", "D:\\temp1");
+
+		} catch (Exception e) {
+
+			mainController.errorAlert("Error Communication ...", e);
+			
+			e.printStackTrace();
+			
+		} 
 		
 	}
 
